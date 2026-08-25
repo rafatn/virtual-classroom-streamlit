@@ -70,13 +70,11 @@ else:
 
     st.markdown("---")
 
-    # שימוש במחרוזת רגילה עם .replace כדי להימנע משגיאת f-string סוגריים מסולסלים
-   html_template = """
+    html_template = """
     <!DOCTYPE html>
     <html lang="he" dir="rtl">
     <head>
         <meta charset="UTF-8">
-        <!-- טעינה ישירה של ספריית LiveKit כ-UMD מובטח -->
         <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.min.js"></script>
     </head>
     <body style="margin:0; background:#1e1e1e; font-family:Arial, sans-serif;">
@@ -100,9 +98,8 @@ else:
                 statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
 
                 try {
-                    // וידוא שהאובייקט קיים
                     if (typeof LiveKit === 'undefined') {
-                        throw new Error("ספריית LiveKit לא נטענה מהדפדפן. בדוק חיבור לרשת או חסימת סקריפטים.");
+                        throw new Error("ספריית LiveKit לא נטענה מהדפדפן. בדוק חיבור לרשת.");
                     }
 
                     const room = new LiveKit.Room();
