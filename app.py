@@ -5,10 +5,10 @@ from livekit import api
 # הגדרת עיצוב העמוד
 st.set_page_config(page_title="מערכת שיעורים מקוונים", page_icon="🎓", layout="wide")
 
-# מפתחות חיבור ל-LiveKit (ניתן לשנות או להגדיר כמשתני סביבה)
-LIVEKIT_URL = os.getenv("LIVEKIT_URL", "wss://your-project.livekit.cloud")
-LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY", "your_api_key")
-LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET", "your_api_secret")
+# שליפת מפתחות חיבור מתוך Streamlit Secrets או משתני סביבה
+LIVEKIT_URL = st.secrets.get("LIVEKIT_URL", os.getenv("LIVEKIT_URL", "wss://your-project.livekit.cloud"))
+LIVEKIT_API_KEY = st.secrets.get("LIVEKIT_API_KEY", os.getenv("LIVEKIT_API_KEY", "your_api_key"))
+LIVEKIT_API_SECRET = st.secrets.get("LIVEKIT_API_SECRET", os.getenv("LIVEKIT_API_SECRET", "your_api_secret"))
 
 # ניהול מצב ההתחברות (Session State)
 if "logged_in" not in st.session_state:
@@ -49,9 +49,9 @@ if not st.session_state.logged_in:
                         .with_grants(api.VideoGrants(
                             room_join=True,
                             room=room,
-                            can_publish=(role == 'teacher'),  # למורה מותר לשדר, לתלמיד לא
-                            can_subscribe=True,               # כולם יכולים לצפות
-                            room_admin=(role == 'teacher')    # למורה יש הרשאות מנהל
+                            can_publish=(role == 'teacher'),
+                            can_subscribe=True,
+                            room_admin=(role == 'teacher')
                         ))
                     
                     st.session_state.token = lk_api.to_jwt()
@@ -66,7 +66,7 @@ if not st.session_state.logged_in:
 # --- מסך השיעור הפעיל ---
 else:
     st.title(f"📚 שיעור: {st.session_state.room}")
-    st.write(f"مرحباً / שלום **{st.session_state.username}**, מחובר בתור: **{'מורה' if st.session_state.role == 'teacher' else 'תלמיד'}**")
+    st.write(f"שלום **{st.session_state.username}**, מחובר בתור: **{'מורה' if st.session_state.role == 'teacher' else 'תלמיד'}**")
 
     # כפתור יציאה מהשיעור
     if st.button("🚪 יציאה מהשיעור"):
@@ -76,7 +76,7 @@ else:
 
     st.markdown("---")
 
-    # שילוב נגן הוידאו של LiveKit באמצעות רכיב HTML/JS מותאם אישית ב-Streamlit
+    # שילוב נגן הוידאו של LiveKit (עם סוגריים כפולים למניעת שגיאות f-string)
     livekit_html = f"""
     <div id="livekit-room" style="width: 100%; height: 500px; background: #1e1e1e; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
         <p id="status-text">מתחבר לשרת הוידאו...</p>
@@ -111,7 +111,6 @@ else:
                 await room.connect(url, token);
                 statusText.innerText = "מחובר בהצלחה לשיעור!";
 
-                // אם זה מורה, הפעל מצלמה ומיקרופון אוטומטית
                 if (role === 'teacher') {{
                     await room.localParticipant.enableCameraAndMicrophone();
                     room.localParticipant.trackPublications.forEach((publication) => {{
@@ -127,7 +126,7 @@ else:
                 }} else {{
                     statusText.innerText = "ממתין למורה שיתחיל את השידור...";
                 }}
-            } catch (error) {{
+            }} catch (error) {{
                 statusText.innerText = "שגיאה בהתחברות לחדר הוידאו.";
                 console.error(error);
             }}
@@ -137,5 +136,4 @@ else:
     </script>
     """
 
-    # הצגת רכיב ה-HTML בתוך Streamlit
     st.components.v1.html(livekit_html, height=550)
