@@ -69,76 +69,74 @@ else:
 
     st.markdown("---")
 
-    # שימוש ב-iframe מותאם אישית שמעביר הרשאות מלאות למצלמה ולמיקרופון
-    components_code = f"""
-    <iframe
-        srcdoc='
-            <div id="livekit-room" style="width: 100%; height: 500px; background: #1e1e1e; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: Arial, sans-serif;">
-                <div id="controls" style="margin-bottom: 15px; text-align: center;">
-                    <p id="status-text">לחץ על הכפתור כדי להתחבר לשידור:</p>
-                    <button id="connect-btn" onclick="startCall()" style="padding: 12px 25px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;">הפעל מצלמה והתחבר</button>
-                </div>
-                <div id="video-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; width: 100%; height: 100%; padding: 10px; box-sizing: border-box;"></div>
-            </div>
+    # קוד HTML/JS נקי שיופעל ישירות ברכיב הרשמי של סטרים-לייט
+    livekit_html = """
+    <div id="livekit-room" style="width: 100%; height: 500px; background: #1e1e1e; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: Arial, sans-serif;">
+        <div id="controls" style="margin-bottom: 15px; text-align: center;">
+            <p id="status-text">לחץ על הכפתור כדי להתחבר לשידור:</p>
+            <button id="connect-btn" onclick="startCall()" style="padding: 12px 25px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;">הפעל מצלמה והתחבר</button>
+        </div>
+        <div id="video-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; width: 100%; height: 100%; padding: 10px; box-sizing: border-box;"></div>
+    </div>
 
-            <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js"></script>
-            <script>
-                const url = "{LIVEKIT_URL}";
-                const token = "{st.session_state.token}";
-                const role = "{st.session_state.role}";
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js"></script>
+    <script>
+        const url = "TOK_URL";
+        const token = "TOK_TOKEN";
+        const role = "TOK_ROLE";
 
-                async function startCall() {{
-                    const btn = document.getElementById("connect-btn");
-                    const statusText = document.getElementById("status-text");
-                    btn.style.display = "none";
-                    statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
+        async function startCall() {
+            const btn = document.getElementById("connect-btn");
+            const statusText = document.getElementById("status-text");
+            btn.style.display = "none";
+            statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
 
-                    try {{
-                        const room = new LiveKit.Room();
-                        const container = document.getElementById("video-container");
+            try {
+                const room = new LiveKit.Room();
+                const container = document.getElementById("video-container");
 
-                        room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {{
-                            if (track.kind === "video" || track.kind === "audio") {{
-                                const element = track.attach();
-                                element.style.width = "100%";
-                                element.style.maxHeight = "400px";
-                                element.style.objectFit = "cover";
-                                element.style.borderRadius = "8px";
-                                container.appendChild(element);
-                            }}
-                        }});
+                room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+                    if (track.kind === "video" || track.kind === "audio") {
+                        const element = track.attach();
+                        element.style.width = "100%";
+                        element.style.maxHeight = "400px";
+                        element.style.objectFit = "cover";
+                        element.style.borderRadius = "8px";
+                        container.appendChild(element);
+                    }
+                });
 
-                        await room.connect(url, token);
-                        statusText.innerText = "מחובר בהצלחה!";
+                await room.connect(url, token);
+                statusText.innerText = "מחובר בהצלחה!";
 
-                        if (role === "teacher") {{
-                            await room.localParticipant.enableCameraAndMicrophone();
-                            room.localParticipant.trackPublications.forEach((publication) => {{
-                                if (publication.track) {{
-                                    const element = publication.track.attach();
-                                    element.style.width = "100%";
-                                    element.style.maxHeight = "400px";
-                                    element.style.objectFit = "cover";
-                                    element.style.borderRadius = "8px";
-                                    container.appendChild(element);
-                                }}
-                            }});
-                        }} else {{
-                            statusText.innerText = "מחובר כתלמיד (האזנה וצפייה בלבד).";
-                        }}
-                    }} catch (error) {{
-                        statusText.innerText = "שגיאה: וודא שהתרת גישה למצלמה ולמיקרופון בדפדפן.";
-                        btn.style.display = "block";
-                        console.error(error);
-                    }}
-                }}
-            </script>
-        '
-        width="100%"
-        height="550px"
-        style="border:none;"
-        allow="camera; microphone; autoplay; encrypted-media; fullscreen"
-    ></iframe>
+                if (role === "teacher") {
+                    await room.localParticipant.enableCameraAndMicrophone();
+                    room.localParticipant.trackPublications.forEach((publication) => {
+                        if (publication.track) {
+                            const element = publication.track.attach();
+                            element.style.width = "100%";
+                            element.style.maxHeight = "400px";
+                            element.style.objectFit = "cover";
+                            element.style.borderRadius = "8px";
+                            container.appendChild(element);
+                        }
+                    });
+                } else {
+                    statusText.innerText = "מחובר כתלמיד (האזנה וצפייה בלבד).";
+                }
+            } catch (error) {
+                statusText.innerText = "שגיאה: וודא שהתרת גישה למצלמה ולמיקרופון בדפדפן.";
+                btn.style.display = "block";
+                console.error(error);
+            }
+        }
+    </script>
     """
-    
-    st.markdown(components_code, unsafe_allow_html=True)
+
+    # החלפת הערכים בצורה בטוחה
+    livekit_html = livekit_html.replace("TOK_URL", LIVEKIT_URL)
+    livekit_html = livekit_html.replace("TOK_TOKEN", st.session_state.token)
+    livekit_html = livekit_html.replace("TOK_ROLE", st.session_state.role)
+
+    # הרצה באמצעות הרכיב הייעודי ל-HTML
+    st.components.v1.html(livekit_html, height=550, scrolling=True)
