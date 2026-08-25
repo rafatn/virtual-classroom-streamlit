@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+import streamlit.components.v1 as components
 from livekit import api
 
 st.set_page_config(page_title="מערכת שיעורים מקוונים", page_icon="🎓", layout="wide")
@@ -69,9 +70,8 @@ else:
 
     st.markdown("---")
 
-    # יצירת HTML מלא שמוכנס לתוך iframe עם הרשאות מפורשות למצלמה ומיקרופון
-    iframe_code = f"""
-    <iframe width="100%" height="550px" style="border:none;" allow="camera; microphone; autoplay; encrypted-media; fullscreen" srcdoc='
+    # בניית קוד ה-HTML וה-JS והזרקת המשתנים מבחוץ בצורה בטוחה
+    html_code = f"""
     <!DOCTYPE html>
     <html lang="he" dir="rtl">
     <head>
@@ -140,7 +140,7 @@ else:
         </script>
     </body>
     </html>
-    '></iframe>
     """
 
-    st.markdown(iframe_code, unsafe_allow_html=True)
+    # שימוש ב-components.html הרשמי של סטרים-לייט עם הרשאות מלאות לחומרה
+    components.html(html_code, height=560, scrolling=True)
