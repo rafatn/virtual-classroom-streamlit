@@ -69,7 +69,8 @@ else:
 
     st.markdown("---")
 
-    livekit_html = f"""
+    # שימוש במחרוזת רגילה לחלוטין בלי שגיאות f-string
+    livekit_html = """
     <div id="livekit-room" style="width: 100%; height: 500px; background: #1e1e1e; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: Arial, sans-serif;">
         <div id="controls" style="margin-bottom: 15px; text-align: center;">
             <p id="status-text">לחץ על הכפתור כדי להתחבר לשידור:</p>
@@ -80,57 +81,61 @@ else:
 
     <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js"></script>
     <script>
-        const url = "{LIVEKIT_URL}";
-        const token = "{st.session_state.token}";
-        const role = "{st.session_state.role}";
+        const url = "TOK_URL";
+        const token = "TOK_TOKEN";
+        const role = "TOK_ROLE";
 
-        async function startCall() {{
+        async function startCall() {
             const btn = document.getElementById('connect-btn');
             const statusText = document.getElementById('status-text');
             btn.style.display = 'none';
             statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
 
-            try {{
+            try {
                 const room = new LiveKit.Room();
                 const container = document.getElementById('video-container');
 
-                room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {{
-                    if (track.kind === 'video' || track.kind === 'audio') {{
+                room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+                    if (track.kind === 'video' || track.kind === 'audio') {
                         const element = track.attach();
                         element.style.width = "100%";
                         element.style.maxHeight = "400px";
                         element.style.objectFit = "cover";
                         element.style.borderRadius = "8px";
                         container.appendChild(element);
-                    }}
-                }});
+                    }
+                });
 
                 await room.connect(url, token);
                 statusText.innerText = "מחובר בהצלחה!";
 
-                if (role === 'teacher') {{
+                if (role === 'teacher') {
                     await room.localParticipant.enableCameraAndMicrophone();
-                    room.localParticipant.trackPublications.forEach((publication) => {{
-                        if (publication.track) {{
+                    room.localParticipant.trackPublications.forEach((publication) => {
+                        if (publication.track) {
                             const element = publication.track.attach();
                             element.style.width = "100%";
                             element.style.maxHeight = "400px";
                             element.style.objectFit = "cover";
                             element.style.borderRadius = "8px";
                             container.appendChild(element);
-                        }}
-                    }});
-                }} else {{
+                        }
+                    });
+                } else {
                     statusText.innerText = "מחובר כתלמיד (האזנה וצפייה בלבד).";
-                }}
-            } catch (error) {{
+                }
+            } catch (error) {
                 statusText.innerText = "שגיאה: וודא שהתרת גישה למצלמה ולמיקרופון בדפדפן.";
                 btn.style.display = 'block';
                 console.error(error);
-            }}
-        }}
+            }
+        }
     </script>
     """
 
-    # הוספת הפרמטרים allow="camera; microphone; autoplay" כדי שהדפדפן יאפשר למצלמה לעבוד בתוך Streamlit
+    # החלפת הערכים בצורה בטוחה בלי f-string
+    livekit_html = livekit_html.replace("TOK_URL", LIVEKIT_URL)
+    livekit_html = livekit_html.replace("TOK_TOKEN", st.session_state.token)
+    livekit_html = livekit_html.replace("TOK_ROLE", st.session_state.role)
+
     st.components.v1.html(livekit_html, height=580, scrolling=True)
