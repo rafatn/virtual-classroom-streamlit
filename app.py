@@ -1,6 +1,5 @@
 import os
 import streamlit as st
-import streamlit.components.v1 as components
 from livekit import api
 
 st.set_page_config(page_title="מערכת שיעורים מקוונים", page_icon="🎓", layout="wide")
@@ -75,6 +74,7 @@ else:
     <html lang="he" dir="rtl">
     <head>
         <meta charset="UTF-8">
+        <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.min.js"></script>
     </head>
     <body style="margin:0; background:#1e1e1e; font-family:Arial, sans-serif;">
         <div id="livekit-room" style="width: 100%; height: 530px; background: #1e1e1e; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
@@ -85,24 +85,26 @@ else:
             <div id="video-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; width: 100%; height: 100%; padding: 10px; box-sizing: border-box;"></div>
         </div>
 
-        <script type="module">
-            import * as LiveKitClient from 'https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.esm.mjs';
+        <script>
+            const url = "REPLACE_URL";
+            const token = "REPLACE_TOKEN";
+            const role = "REPLACE_ROLE";
 
-            window.loadAndStart = async function() {
+            async function loadAndStart() {
                 const btn = document.getElementById("connect-btn");
                 const statusText = document.getElementById("status-text");
                 btn.style.display = "none";
                 statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
 
                 try {
-                    const url = "REPLACE_URL";
-                    const token = "REPLACE_TOKEN";
-                    const role = "REPLACE_ROLE";
+                    if (typeof LiveKit === 'undefined') {
+                        throw new Error("ספריית LiveKit לא נטענה מהדפדפן. בדוק חיבור לרשת.");
+                    }
 
-                    const room = new LiveKitClient.Room();
+                    const room = new LiveKit.Room();
                     const container = document.getElementById("video-container");
 
-                    room.on(LiveKitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+                    room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {
                         if (track.kind === "video" || track.kind === "audio") {
                             const element = track.attach();
                             element.style.width = "100%";
@@ -146,4 +148,5 @@ else:
                              .replace("REPLACE_TOKEN", st.session_state.token) \
                              .replace("REPLACE_ROLE", st.session_state.role)
 
-    components.html(html_code, height=560, scrolling=True)
+    # שימוש ב-st.iframe המומלץ והחדש במקום st.components.v1.html
+    st.iframe(srcdoc=html_code, height=560, scrolling=True)
