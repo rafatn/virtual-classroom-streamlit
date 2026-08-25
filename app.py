@@ -70,7 +70,6 @@ else:
 
     st.markdown("---")
 
-    # קוד HTML מעודכן שטוען את ספריית ה-Client בצורה דינמית ובטוחה
     html_code = f"""
     <!DOCTYPE html>
     <html lang="he" dir="rtl">
@@ -91,14 +90,18 @@ else:
             const token = "{st.session_state.token}";
             const role = "{st.session_state.role}";
 
-            function loadScript(url) {{
+            function loadLiveKitScript() {{
                 return new Promise((resolve, reject) => {{
+                    if (typeof LiveKit !== 'undefined') {{
+                        resolve();
+                        return;
+                    }}
                     const script = document.createElement('script');
-                    script.src = url;
-                    script.onload = resolve;
-                    script.onerror = reject;
+                    script.src = "https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js";
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error("Failed to load LiveKit script from CDN"));
                     document.head.appendChild(script);
-                }});
+                });
             }}
 
             async function loadAndStart() {{
@@ -108,10 +111,7 @@ else:
                 statusText.innerText = "טוען ספריות חיבור...";
 
                 try {{
-                    // טעינה דינמית של LiveKit לוודא שהיא זמינה לחלוטין
-                    if (typeof LiveKit === 'undefined') {{
-                        await loadScript("https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js");
-                    }}
+                    await loadLiveKitScript();
 
                     statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
 
@@ -148,7 +148,7 @@ else:
                         statusText.innerText = "מחובר כתלמיד (האזנה וצפייה בלבד).";
                     }}
                 }} catch (error) {{
-                    statusText.innerText = "שגיאה: וודא שהתרת גישה למצלמה ולמיקרופון בדפדפן.";
+                    statusText.innerText = "שגיאה: " + (error.message || error);
                     btn.style.display = "block";
                     console.error(error);
                 }}
