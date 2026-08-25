@@ -2,15 +2,12 @@ import os
 import streamlit as st
 from livekit import api
 
-# הגדרת עיצוב העמוד
 st.set_page_config(page_title="מערכת שיעורים מקוונים", page_icon="🎓", layout="wide")
 
-# שליפת מפתחות חיבור מתוך Streamlit Secrets או משתני סביבה
 LIVEKIT_URL = st.secrets.get("LIVEKIT_URL", os.getenv("LIVEKIT_URL", "wss://your-project.livekit.cloud"))
 LIVEKIT_API_KEY = st.secrets.get("LIVEKIT_API_KEY", os.getenv("LIVEKIT_API_KEY", "your_api_key"))
 LIVEKIT_API_SECRET = st.secrets.get("LIVEKIT_API_SECRET", os.getenv("LIVEKIT_API_SECRET", "your_api_secret"))
 
-# ניהול מצב ההתחברות (Session State)
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
@@ -22,7 +19,6 @@ if "role" not in st.session_state:
 if "token" not in st.session_state:
     st.session_state.token = ""
 
-# --- מסך התחברות ---
 if not st.session_state.logged_in:
     st.markdown("<h2 style='text-align: center;'>🎓 כניסה למערכת שיעורים מקוונים</h2>", unsafe_allow_html=True)
     
@@ -42,7 +38,6 @@ if not st.session_state.logged_in:
                 if username and room:
                     role = "teacher" if "מורה" in role_selection else "student"
                     
-                    # יצירת טוקן אבטחה מול LiveKit API
                     lk_api = api.AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET) \
                         .with_identity(username) \
                         .with_name(username) \
@@ -63,12 +58,10 @@ if not st.session_state.logged_in:
                 else:
                     st.error("נא למלא את כל השדות.")
 
-# --- מסך השיעור הפעיל ---
 else:
     st.title(f"📚 שיעור: {st.session_state.room}")
     st.write(f"שלום **{st.session_state.username}**, מחובר בתור: **{'מורה' if st.session_state.role == 'teacher' else 'תלמיד'}**")
 
-    # כפתור יציאה מהשיעור
     if st.button("🚪 יציאה מהשיעור"):
         st.session_state.logged_in = False
         st.session_state.token = ""
@@ -76,40 +69,44 @@ else:
 
     st.markdown("---")
 
-    # שילוב נגן הוידאו של LiveKit (עם סוגריים כפולים למניעת שגיאות f-string)
     livekit_html = f"""
-    <div id="livekit-room" style="width: 100%; height: 500px; background: #1e1e1e; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
-        <p id="status-text">מתחבר לשרת הוידאו...</p>
+    <div id="livekit-room" style="width: 100%; height: 500px; background: #1e1e1e; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: Arial, sans-serif;">
+        <div id="controls" style="margin-bottom: 15px; text-align: center;">
+            <p id="status-text">לחץ על הכפתור כדי להתחבר לשידור:</p>
+            <button id="connect-btn" onclick="startCall()" style="padding: 12px 25px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;">הפעל מצלמה והתחבר</button>
+        </div>
         <div id="video-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; width: 100%; height: 100%; padding: 10px; box-sizing: border-box;"></div>
     </div>
 
-    <!-- טעינת LiveKit Client SDK -->
     <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js"></script>
     <script>
         const url = "{LIVEKIT_URL}";
         const token = "{st.session_state.token}";
         const role = "{st.session_state.role}";
 
-        async function run() {{
-            const room = new LiveKit.Room();
-            const container = document.getElementById('video-container');
+        async function startCall() {{
+            const btn = document.getElementById('connect-btn');
             const statusText = document.getElementById('status-text');
-
-            room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {{
-                if (track.kind === 'video' || track.kind === 'audio') {{
-                    const element = track.attach();
-                    element.style.width = "100%";
-                    element.style.maxHeight = "450px";
-                    element.style.objectFit = "cover";
-                    element.style.borderRadius = "8px";
-                    container.appendChild(element);
-                    statusText.style.display = 'none';
-                }}
-            }});
+            btn.style.display = 'none';
+            statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
 
             try {{
+                const room = new LiveKit.Room();
+                const container = document.getElementById('video-container');
+
+                room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {{
+                    if (track.kind === 'video' || track.kind === 'audio') {{
+                        const element = track.attach();
+                        element.style.width = "100%";
+                        element.style.maxHeight = "400px";
+                        element.style.objectFit = "cover";
+                        element.style.borderRadius = "8px";
+                        container.appendChild(element);
+                    }}
+                }});
+
                 await room.connect(url, token);
-                statusText.innerText = "מחובר בהצלחה לשיעור!";
+                statusText.innerText = "מחובר בהצלחה!";
 
                 if (role === 'teacher') {{
                     await room.localParticipant.enableCameraAndMicrophone();
@@ -117,23 +114,23 @@ else:
                         if (publication.track) {{
                             const element = publication.track.attach();
                             element.style.width = "100%";
-                            element.style.maxHeight = "450px";
+                            element.style.maxHeight = "400px";
                             element.style.objectFit = "cover";
                             element.style.borderRadius = "8px";
                             container.appendChild(element);
                         }}
                     }});
                 }} else {{
-                    statusText.innerText = "ממתין למורה שיתחיל את השידור...";
+                    statusText.innerText = "מחובר כתלמיד (האזנה וצפייה בלבד).";
                 }}
-            }} catch (error) {{
-                statusText.innerText = "שגיאה בהתחברות לחדר הוידאו.";
+            } catch (error) {{
+                statusText.innerText = "שגיאה: וודא שהתרת גישה למצלמה ולמיקרופון בדפדפן.";
+                btn.style.display = 'block';
                 console.error(error);
             }}
         }}
-
-        run();
     </script>
     """
 
-    st.components.v1.html(livekit_html, height=550)
+    # הוספת הפרמטרים allow="camera; microphone; autoplay" כדי שהדפדפן יאפשר למצלמה לעבוד בתוך Streamlit
+    st.components.v1.html(livekit_html, height=580, scrolling=True)
