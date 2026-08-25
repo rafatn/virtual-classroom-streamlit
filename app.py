@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+import streamlit.components.v1 as components
 from livekit import api
 
 st.set_page_config(page_title="מערכת שיעורים מקוונים", page_icon="🎓", layout="wide")
@@ -148,5 +149,4 @@ else:
                              .replace("REPLACE_TOKEN", st.session_state.token) \
                              .replace("REPLACE_ROLE", st.session_state.role)
 
-    # שימוש ב-st.iframe המומלץ והחדש במקום st.components.v1.html
-    st.iframe(srcdoc=html_code, height=560, scrolling=True)
+    components.html(html_code, height=560, scrolling=True)
