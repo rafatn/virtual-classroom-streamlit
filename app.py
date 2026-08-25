@@ -70,19 +70,18 @@ else:
 
     st.markdown("---")
 
-    # בניית קוד ה-HTML וה-JS והזרקת המשתנים מבחוץ בצורה בטוחה
+    # קוד HTML מעודכן שטוען את ספריית ה-Client בצורה דינמית ובטוחה
     html_code = f"""
     <!DOCTYPE html>
     <html lang="he" dir="rtl">
     <head>
         <meta charset="UTF-8">
-        <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js"></script>
     </head>
     <body style="margin:0; background:#1e1e1e; font-family:Arial, sans-serif;">
         <div id="livekit-room" style="width: 100%; height: 530px; background: #1e1e1e; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
             <div id="controls" style="margin-bottom: 15px; text-align: center;">
                 <p id="status-text">לחץ על הכפתור כדי להתחבר לשידור:</p>
-                <button id="connect-btn" onclick="startCall()" style="padding: 12px 25px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;">הפעל מצלמה והתחבר</button>
+                <button id="connect-btn" onclick="loadAndStart()" style="padding: 12px 25px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;">הפעל מצלמה והתחבר</button>
             </div>
             <div id="video-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; width: 100%; height: 100%; padding: 10px; box-sizing: border-box;"></div>
         </div>
@@ -92,13 +91,30 @@ else:
             const token = "{st.session_state.token}";
             const role = "{st.session_state.role}";
 
-            async function startCall() {{
+            function loadScript(url) {{
+                return new Promise((resolve, reject) => {{
+                    const script = document.createElement('script');
+                    script.src = url;
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                }});
+            }}
+
+            async function loadAndStart() {{
                 const btn = document.getElementById("connect-btn");
                 const statusText = document.getElementById("status-text");
                 btn.style.display = "none";
-                statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
+                statusText.innerText = "טוען ספריות חיבור...";
 
                 try {{
+                    // טעינה דינמית של LiveKit לוודא שהיא זמינה לחלוטין
+                    if (typeof LiveKit === 'undefined') {{
+                        await loadScript("https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js");
+                    }}
+
+                    statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
+
                     const room = new LiveKit.Room();
                     const container = document.getElementById("video-container");
 
@@ -142,5 +158,4 @@ else:
     </html>
     """
 
-    # שימוש ב-components.html הרשמי של סטרים-לייט עם הרשאות מלאות לחומרה
     components.html(html_code, height=560, scrolling=True)
