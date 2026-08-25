@@ -71,11 +71,13 @@ else:
     st.markdown("---")
 
     # שימוש במחרוזת רגילה עם .replace כדי להימנע משגיאת f-string סוגריים מסולסלים
-    html_template = """
+   html_template = """
     <!DOCTYPE html>
     <html lang="he" dir="rtl">
     <head>
         <meta charset="UTF-8">
+        <!-- טעינה ישירה של ספריית LiveKit כ-UMD מובטח -->
+        <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.min.js"></script>
     </head>
     <body style="margin:0; background:#1e1e1e; font-family:Arial, sans-serif;">
         <div id="livekit-room" style="width: 100%; height: 530px; background: #1e1e1e; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
@@ -91,30 +93,17 @@ else:
             const token = "REPLACE_TOKEN";
             const role = "REPLACE_ROLE";
 
-            function loadLiveKitScript() {
-                return new Promise((resolve, reject) => {
-                    if (typeof LiveKit !== 'undefined') {
-                        resolve();
-                        return;
-                    }
-                    const script = document.createElement('script');
-                    script.src = "https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js";
-                    script.onload = () => resolve();
-                    script.onerror = () => reject(new Error("Failed to load LiveKit script from CDN"));
-                    document.head.appendChild(script);
-                });
-            }
-
             async function loadAndStart() {
                 const btn = document.getElementById("connect-btn");
                 const statusText = document.getElementById("status-text");
                 btn.style.display = "none";
-                statusText.innerText = "טוען ספריות חיבור...";
+                statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
 
                 try {
-                    await loadLiveKitScript();
-
-                    statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
+                    // וידוא שהאובייקט קיים
+                    if (typeof LiveKit === 'undefined') {
+                        throw new Error("ספריית LiveKit לא נטענה מהדפדפן. בדוק חיבור לרשת או חסימת סקריפטים.");
+                    }
 
                     const room = new LiveKit.Room();
                     const container = document.getElementById("video-container");
@@ -159,7 +148,6 @@ else:
     </html>
     """
 
-    # החלפת הערכים בצורה בטוחה בלי לפגוע בסוגריים של ה-JS
     html_code = html_template.replace("REPLACE_URL", LIVEKIT_URL) \
                              .replace("REPLACE_TOKEN", st.session_state.token) \
                              .replace("REPLACE_ROLE", st.session_state.role)
