@@ -70,7 +70,8 @@ else:
 
     st.markdown("---")
 
-    html_code = f"""
+    # שימוש במחרוזת רגילה עם .replace כדי להימנע משגיאת f-string סוגריים מסולסלים
+    html_template = """
     <!DOCTYPE html>
     <html lang="he" dir="rtl">
     <head>
@@ -86,31 +87,31 @@ else:
         </div>
 
         <script>
-            const url = "{LIVEKIT_URL}";
-            const token = "{st.session_state.token}";
-            const role = "{st.session_state.role}";
+            const url = "REPLACE_URL";
+            const token = "REPLACE_TOKEN";
+            const role = "REPLACE_ROLE";
 
-            function loadLiveKitScript() {{
-                return new Promise((resolve, reject) => {{
-                    if (typeof LiveKit !== 'undefined') {{
+            function loadLiveKitScript() {
+                return new Promise((resolve, reject) => {
+                    if (typeof LiveKit !== 'undefined') {
                         resolve();
                         return;
-                    }}
+                    }
                     const script = document.createElement('script');
                     script.src = "https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.js";
                     script.onload = () => resolve();
                     script.onerror = () => reject(new Error("Failed to load LiveKit script from CDN"));
                     document.head.appendChild(script);
                 });
-            }}
+            }
 
-            async function loadAndStart() {{
+            async function loadAndStart() {
                 const btn = document.getElementById("connect-btn");
                 const statusText = document.getElementById("status-text");
                 btn.style.display = "none";
                 statusText.innerText = "טוען ספריות חיבור...";
 
-                try {{
+                try {
                     await loadLiveKitScript();
 
                     statusText.innerText = "מתחבר לשרת הוידאו ומבקש גישה למצלמה...";
@@ -118,44 +119,49 @@ else:
                     const room = new LiveKit.Room();
                     const container = document.getElementById("video-container");
 
-                    room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {{
-                        if (track.kind === "video" || track.kind === "audio") {{
+                    room.on(LiveKit.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+                        if (track.kind === "video" || track.kind === "audio") {
                             const element = track.attach();
                             element.style.width = "100%";
                             element.style.maxHeight = "400px";
                             element.style.objectFit = "cover";
                             element.style.borderRadius = "8px";
                             container.appendChild(element);
-                        }}
-                    }});
+                        }
+                    });
 
                     await room.connect(url, token);
                     statusText.innerText = "מחובר בהצלחה!";
 
-                    if (role === "teacher") {{
+                    if (role === "teacher") {
                         await room.localParticipant.enableCameraAndMicrophone();
-                        room.localParticipant.trackPublications.forEach((publication) => {{
-                            if (publication.track) {{
+                        room.localParticipant.trackPublications.forEach((publication) => {
+                            if (publication.track) {
                                 const element = publication.track.attach();
                                 element.style.width = "100%";
                                 element.style.maxHeight = "400px";
                                 element.style.objectFit = "cover";
                                 element.style.borderRadius = "8px";
                                 container.appendChild(element);
-                            }}
-                        }});
-                    }} else {{
+                            }
+                        });
+                    } else {
                         statusText.innerText = "מחובר כתלמיד (האזנה וצפייה בלבד).";
-                    }}
-                }} catch (error) {{
+                    }
+                } catch (error) {
                     statusText.innerText = "שגיאה: " + (error.message || error);
                     btn.style.display = "block";
                     console.error(error);
-                }}
-            }}
+                }
+            }
         </script>
     </body>
     </html>
     """
+
+    # החלפת הערכים בצורה בטוחה בלי לפגוע בסוגריים של ה-JS
+    html_code = html_template.replace("REPLACE_URL", LIVEKIT_URL) \
+                             .replace("REPLACE_TOKEN", st.session_state.token) \
+                             .replace("REPLACE_ROLE", st.session_state.role)
 
     components.html(html_code, height=560, scrolling=True)
