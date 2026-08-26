@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית - גרסה מתוקנת ויציבה</title>
+    <title>כיתה וירטואלית מתקדמת - השתקת פרט, טשטוש רקע וסקרים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -110,6 +110,7 @@
             object-fit: cover;
         }
 
+        /* אפקט טשטוש רקע וידאו */
         .blur-bg video {
             filter: blur(8px) contrast(1.1);
         }
@@ -169,6 +170,7 @@
             font-size: 0.9rem;
         }
 
+        /* פאנל סקרים פעילים */
         .poll-panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -276,7 +278,7 @@
     <div id="toast-container"></div>
 
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית - גרסה יציבה ומתוקנת</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית - השתקת פרט, טשטוש רקע וסקרים</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -305,7 +307,6 @@
                     <button onclick="toggleScreenShare()" style="background: #8b5cf6;">🖥️ שתף מסך</button>
                     <button onclick="toggleWhiteboard()" style="background: #ec4899;">🎨 לוח לבן</button>
                     <button id="record-btn" class="success" onclick="toggleRecording()">⏺️ הקלט</button>
-                    <button onclick="downloadMeetingSummary()" style="background: #14b8a6;" title="ייצוא סיכום שיעור אוטומטי">📄 סיכום שיעור</button>
                     <button onclick="muteEveryone()" class="danger" style="background: #b91c1c;">🔇 השתק כולם</button>
                 </div>
 
@@ -341,7 +342,7 @@
 
             <!-- פאנלים בצד -->
             <div class="panels-container">
-                <!-- רשימת משתתפים -->
+                <!-- רשימת משתתפים עם אפשרות השתקת פרט -->
                 <div class="participants-panel">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 5px;">
                         <h3 style="margin: 0; font-size: 0.95rem;">👥 משתתפים (<span id="participant-count">1</span>)</h3>
@@ -478,6 +479,17 @@
                         updateParticipantsUI();
                         updateVideoLabel(conn.peer);
                     }
+                } else if (data.type === 'mute-specific') {
+                    // פקודת השתקה אישית מהמורה
+                    const audioTrack = myStream.getAudioTracks()[0];
+                    if (audioTrack.enabled) {
+                        audioTrack.enabled = false;
+                        document.getElementById('mic-btn').innerText = "🎤 הפעל מיקרופון";
+                        document.getElementById('mic-btn').style.background = "#ef4444";
+                        updateLocalStatusIcons();
+                        broadcastStatus();
+                        showToast("🔇 המורה הפתיק והשתיק את המיקרופון שלך");
+                    }
                 } else if (data.type === 'mute-all') {
                     const audioTrack = myStream.getAudioTracks()[0];
                     if (audioTrack.enabled) {
@@ -533,6 +545,7 @@
             }
         }
 
+        // --- עדכון רשימת משתתפים ויכולת השתקת משתתף ספציפי ---
         function updateParticipantsUI() {
             const listEl = document.getElementById('participants-list');
             let html = "";
@@ -544,14 +557,25 @@
                 let micIcon = p.mic ? "🎤" : "🔇";
                 let camIcon = p.cam ? "📹" : "📷❌";
                 let handIcon = p.hand ? " ✋" : "";
+                
+                // כפתור השתקה לתלמיד אם זה משתתף מרוחק (ניתן להוסיף הרשאת מורה מלאה)
+                let muteButton = (id !== 'local') ? `<button onclick="muteSpecificUser('${id}')" style="font-size:0.7rem; padding:2px 6px; background:#b91c1c; margin:0;">השתק</button>` : "";
 
-                html += `<li><span><b>${p.name}</b>${handIcon}</span> <span style="display:flex; gap:6px; align-items:center;">${micIcon} ${camIcon}</span></li>`;
+                html += `<li><span><b>${p.name}</b>${handIcon}</span> <span style="display:flex; gap:6px; align-items:center;">${micIcon} ${camIcon} ${muteButton}</span></li>`;
             }
 
             listEl.innerHTML = html;
             document.getElementById('participant-count').innerText = count;
         }
 
+        function muteSpecificUser(peerId) {
+            if (connections[peerId]) {
+                connections[peerId].send({ type: 'mute-specific' });
+                showToast(`🔇 נשלחה פקודת השתקה ל-${participantsData[peerId]?.name || 'משתתף'}`);
+            }
+        }
+
+        // --- טשטוש רקע וידאו ---
         function toggleBackgroundBlur() {
             const box = document.getElementById('local-video-box');
             box.classList.toggle('blur-bg');
@@ -562,6 +586,7 @@
             showToast(isBlurred ? "🌫️ טשטוש רקע הופעל" : "🌫️ טשטוש רקע הוסר");
         }
 
+        // --- ניהול סקרים כיתתיים ---
         function openPollModal() {
             const question = prompt("הכנס את שאלת הסקר:");
             if (!question) return;
@@ -570,7 +595,7 @@
             if (!opt1 || !opt2) return;
 
             let options = [opt1, opt2];
-            const opt3 = prompt("אפשרות תשובה 3 (אופציונלי):");
+            const opt3 = prompt("אפשרות תשובה 3 (אופציונלי, השאר ריק אם אין):");
             if (opt3) options.push(opt3);
 
             currentPoll = {
@@ -592,7 +617,8 @@
             area.style.display = 'block';
 
             let totalVotes = currentPoll.votes.reduce((a, b) => a + b, 0);
-            let html = `<p style="margin: 0 0 8px; font-weight: bold;">שאלה: ${currentPoll.question}</p>`;
+
+            let html = `<p style="margin: 0 0 8px; font-weight: bold;">שלה: ${currentPoll.question}</p>`;
             currentPoll.options.forEach((opt, index) => {
                 let votesCount = currentPoll.votes[index];
                 let percent = totalVotes > 0 ? Math.round((votesCount / totalVotes) * 100) : 0;
@@ -616,56 +642,7 @@
             showToast("✅ הצבעתך נקלטה בסקר!");
         }
 
-        function downloadMeetingSummary() {
-            let summaryText = `=====================================\n`;
-            summaryText += `       סיכום שיעור וירטואלי - אוטומטי\n`;
-            summaryText += `=====================================\n`;
-            summaryText += `תאריך הפקה: ${new Date().toLocaleString('he-IL')}\n\n`;
-
-            summaryText += `--- רשימת משתתפים (${Object.keys(participantsData).length}) ---\n`;
-            for (let id in participantsData) {
-                let p = participantsData[id];
-                summaryText += `• ${p.name} (מיקרופון: ${p.mic ? 'פעיל' : 'מושתק'}, מצלמה: ${p.cam ? 'פתוחה' : 'סגורה'})\n`;
-            }
-
-            summaryText += `\n--- תוצאות סקר אחרון ---\n`;
-            if (currentPoll) {
-                summaryText += `שאלה: ${currentPoll.question}\n`;
-                let totalVotes = currentPoll.votes.reduce((a, b) => a + b, 0);
-                currentPoll.options.forEach((opt, i) => {
-                    let v = currentPoll.votes[i];
-                    let p = totalVotes > 0 ? Math.round((v / totalVotes) * 100) : 0;
-                    summaryText += `  - ${opt}: ${v} קולות (${p}%)\n`;
-                });
-            } else {
-                summaryText += `לא התקיימו סקרים בשיעור זה.\n`;
-            }
-
-            summaryText += `\n--- היסטוריית צ'אט וקבצים ---\n`;
-            let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
-            if (history.length > 0) {
-                history.forEach(item => {
-                    if (item.type === 'text') {
-                        summaryText += `[${item.sender}]: ${item.text}\n`;
-                    } else {
-                        summaryText += `[${item.sender}] שלח קובץ: ${item.fileName}\n`;
-                    }
-                });
-            } else {
-                summaryText += `אין הודעות בצ'אט.\n`;
-            }
-
-            summaryText += `\n=====================================\n`;
-
-            const blob = new Blob([summaryText], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `class-summary-${new Date().toISOString().slice(0,10)}.txt`;
-            a.click();
-            showToast("📄 סיכום השיעור נוצר והורד למחשב בהצלחה!");
-        }
-
+        // --- מצב פוקוס / Spotlight ---
         function toggleSpotlight(boxElement) {
             const isAlreadySpotlight = boxElement.classList.contains('spotlight');
             document.querySelectorAll('.video-box').forEach(b => b.classList.remove('spotlight'));
@@ -674,6 +651,7 @@
             }
         }
 
+        // --- הרמת יד ---
         function toggleHandRaise() {
             let p = participantsData['local'];
             p.hand = !p.hand;
@@ -690,6 +668,7 @@
             if (p.hand) showToast("✋ הרמת את היד בהצלחה למורה");
         }
 
+        // --- השתקת כולם (מורה) ---
         function muteEveryone() {
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'mute-all' });
@@ -697,6 +676,7 @@
             showToast("🔇 נשלחה פקודת השתקה לכל המשתתפים בחדר");
         }
 
+        // --- בקרת שמע ווידאו אישיים ---
         function toggleMic() {
             const audioTrack = myStream.getAudioTracks()[0];
             audioTrack.enabled = !audioTrack.enabled;
@@ -739,6 +719,7 @@
             }
         }
 
+        // --- לוח לבן מתקדם ---
         const whiteboardContainer = document.getElementById('whiteboard-container');
         const canvas = document.getElementById('whiteboard');
         const ctx = canvas.getContext('2d');
@@ -782,6 +763,7 @@
 
         function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
+        // --- צ'אט וקבצים ---
         function saveAndAppendMessage(sender, text) {
             let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
             history.push({ type: 'text', sender, text });
@@ -840,6 +822,7 @@
             reader.readAsDataURL(file);
         }
 
+        // --- הקלטת שיעור ושיתוף מסך ---
         function toggleRecording() {
             const btn = document.getElementById('record-btn');
             if (!mediaRecorder || mediaRecorder.state === "inactive") {
