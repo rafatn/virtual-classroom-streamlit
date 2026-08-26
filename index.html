@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - מפה, AI, קבצים ועוד</title>
+    <title>כיתה וירטואלית אולטימטיבית - מפה, AI, קבצים, שערי מט"ח ועוד</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -585,7 +585,7 @@
 
     <div class="container">
         <header class="app-header">
-            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם מפה חיה, AI, קבצים ותלת-מימד)</h2>
+            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם מפה חיה, AI, שערי מט"ח ועוד)</h2>
             <button onclick="toggleTheme()" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); font-size: 0.85rem; padding: 6px 12px;">🌓 מצב תצוגה</button>
         </header>
 
@@ -739,6 +739,28 @@
 
             <!-- פאנלים בצד -->
             <div class="sidebar-panels">
+                <!-- שערי מט"ח חיים -->
+                <div class="panel-box">
+                    <h3>
+                        <span>💱 שערי מט"ח חיים</span>
+                        <button onclick="fetchExchangeRates()" style="font-size: 0.65rem; padding: 3px 6px; margin: 0; background: var(--accent);">רענן</button>
+                    </h3>
+                    <div id="currency-rates-box" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+                        טוען שערי המרה מול שקל...
+                    </div>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <input type="number" id="calc-amount" value="100" style="width: 75px; margin:0; padding:6px; font-size:0.85rem; text-align:center;" oninput="convertCurrency()">
+                        <select id="calc-from" style="background: var(--bg-base); color: var(--text-main); padding: 6px; font-size:0.85rem; margin:0;" onchange="convertCurrency()">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="ILS">ILS (₪)</option>
+                        </select>
+                        <span style="font-weight:bold;">=</span>
+                        <span id="calc-result" style="font-weight:bold; color: var(--success); font-size: 0.95rem;">-</span>
+                    </div>
+                </div>
+
                 <!-- כלי הוראה עם שעון עצר -->
                 <div class="panel-box">
                     <h3>⏱️ כלי הוראה חכמים</h3>
@@ -874,6 +896,8 @@
         let lastExportData = null;
         const colors = ['#6366f1', '#38bdf8', '#f43f5e', '#10b981', '#f59e0b', '#c084fc'];
 
+        let exchangeRates = { USD: 3.65, EUR: 3.95, GBP: 4.60, ILS: 1.00 }; // ערכי ברירת מחדל למקרה שאין אינטרנט
+
         const userColors = [
             '#38bdf8', '#f472b6', '#34d399', '#fbbf24', 
             '#c084fc', '#fb7185', '#2dd4bf', '#818cf8'
@@ -891,7 +915,6 @@
         const localVideo = document.getElementById('local-video');
         const chatMessages = document.getElementById('chat-messages');
 
-        // פונקציה לזיהוי מערכת הפעלה ודפדפן
         function getClientSystemInfo() {
             const ua = navigator.userAgent;
             let browser = "דפדפן לא ידוע";
@@ -916,6 +939,46 @@
         function toggleTheme() {
             const body = document.body;
             body.getAttribute("data-theme") === "dark" ? body.setAttribute("data-theme", "light") : body.setAttribute("data-theme", "dark");
+        }
+
+        // שליפת שערי מט"ח חיים
+        async function fetchExchangeRates() {
+            try {
+                const res = await fetch('https://api.exchangerate-api.com/v4/latest/ILS');
+                const data = await res.json();
+                if (data && data.rates) {
+                    // ה-API מחזיר כמה שקל שווה ביחס לאחרים, לכן נהפוך כדי לקבל כמה שקל עולה דולר/יורו/פאונד
+                    exchangeRates.USD = parseFloat((1 / data.rates.USD).toFixed(4));
+                    exchangeRates.EUR = parseFloat((1 / data.rates.EUR).toFixed(4));
+                    exchangeRates.GBP = parseFloat((1 / data.rates.GBP).toFixed(4));
+                    exchangeRates.ILS = 1.00;
+
+                    document.getElementById('currency-rates-box').innerHTML = `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span>💵 דולר (USD): <b style="color:var(--text-main);">${exchangeRates.USD} ₪</b></span>
+                            <span>💶 יורו (EUR): <b style="color:var(--text-main);">${exchangeRates.EUR} ₪</b></span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>💷 פאונד (GBP): <b style="color:var(--text-main);">${exchangeRates.GBP} ₪</b></span>
+                            <span style="font-size:0.75rem; color:var(--success);">חי (עודכן כעת)</span>
+                        </div>
+                    `;
+                    convertCurrency();
+                }
+            } catch (e) {
+                document.getElementById('currency-rates-box').innerHTML = `שערי מט"ח (מצב מקומי: USD: ${exchangeRates.USD}₪)`;
+                convertCurrency();
+            }
+        }
+
+        function convertCurrency() {
+            const amount = parseFloat(document.getElementById('calc-amount').value) || 0;
+            const fromCurr = document.getElementById('calc-from').value;
+            
+            // המרה לשקל תחילה
+            let valueInILS = amount * exchangeRates[fromCurr];
+            // הצגה בשקלים או בחזרה למטבע יעד (כאן מציג בשקלים או המרה הפוכה)
+            document.getElementById('calc-result').innerText = `${valueInILS.toFixed(2)} ₪`;
         }
 
         async function fetchMyLocation() {
@@ -1042,6 +1105,8 @@
             fetchMyLocation().then(() => {
                 if (leafletMap) updateMapMarkers();
             });
+
+            fetchExchangeRates();
 
             getMediaStreamWithQuality('sd').then(stream => {
                 myStream = stream;
