@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית מתקדמת - WebRTC</title>
+    <title>כיתה וירטואלית מתקדמת עם הקלטה וקבצים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -14,6 +14,7 @@
             --text: #f8fafc;
             --border: #334155;
             --danger: #ef4444;
+            --success: #22c55e;
         }
 
         body {
@@ -29,7 +30,7 @@
 
         .container {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1250px;
         }
 
         .card {
@@ -57,11 +58,12 @@
             cursor: pointer;
             font-weight: bold;
             border: none;
+            transition: background 0.2s;
         }
         button:hover { background: var(--accent-hover); }
         .danger { background: var(--danger); }
+        .success { background: var(--success); }
 
-        /* אזור ראשי: וידאו בצד אחד, צ'אט/לוח בצד שני */
         .main-layout {
             display: none;
             grid-template-columns: 2fr 1fr;
@@ -72,7 +74,6 @@
             .main-layout { grid-template-columns: 1fr; }
         }
 
-        /* גריד למצלמות */
         .video-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -99,13 +100,20 @@
             position: absolute;
             bottom: 5px;
             right: 5px;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.7);
             padding: 2px 6px;
             font-size: 0.8rem;
             border-radius: 4px;
         }
 
-        /* אזור כלים (צ'אט ולוח) */
+        .controls-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
         .tools-panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -113,7 +121,7 @@
             padding: 15px;
             display: flex;
             flex-direction: column;
-            height: 600px;
+            height: 650px;
         }
 
         .chat-messages {
@@ -130,15 +138,20 @@
 
         .chat-input-area {
             display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .chat-row {
+            display: flex;
             gap: 5px;
         }
 
-        .chat-input-area input {
+        .chat-row input {
             flex: 1;
             margin: 0;
         }
 
-        /* לוח לבן */
         #whiteboard-container {
             display: none;
             margin-top: 15px;
@@ -159,7 +172,7 @@
 <body>
 
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית רב-משתתפים</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית חכמה ומלאה</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -169,19 +182,26 @@
             <button onclick="startApp()">הפעל מצלמה והכנס למערכת</button>
         </div>
 
-        <!-- לוח בקרה ראשי אחרי כניסה -->
+        <!-- לוח בקרה ראשי -->
         <div class="card" id="room-controls" style="display: none;">
             <div id="room-info" style="font-size: 1.1rem; color: #4ade80; margin-bottom: 10px;"></div>
             <input type="text" id="target-room-input" placeholder="הכנס קוד חדר של המורה להצטרפות">
             <button onclick="joinClassRoom()">הצטרף לחדר קיים</button>
-            <button onclick="toggleScreenShare()" style="background: #8b5cf6;">🖥️ שתף מסך</button>
-            <button onclick="toggleWhiteboard()" style="background: #ec4899;">🎨 פתח לוח לבן</button>
         </div>
 
         <!-- אזור השידור והכלים -->
         <div class="main-layout" id="main-layout">
             <div>
-                <!-- גריד וידאו של כולם -->
+                <!-- סרגל בקרת שמע, וידאו והקלטה -->
+                <div class="controls-bar">
+                    <button id="mic-btn" onclick="toggleMic()">🎤 השתק מיקרופון</button>
+                    <button id="cam-btn" onclick="toggleCamera()">📹 לכבות מצלמה</button>
+                    <button onclick="toggleScreenShare()" style="background: #8b5cf6;">🖥️ שתף מסך</button>
+                    <button onclick="toggleWhiteboard()" style="background: #ec4899;">🎨 לוח לבן</button>
+                    <button id="record-btn" class="success" onclick="toggleRecording()">⏺️ התחל הקלטה</button>
+                </div>
+
+                <!-- גריד וידאו -->
                 <div class="video-grid" id="video-grid">
                     <div class="video-box">
                         <video id="local-video" autoplay muted playsinline></video>
@@ -198,13 +218,19 @@
                 </div>
             </div>
 
-            <!-- פאנל צ'אט -->
+            <!-- פאנל צ'אט וקבצים -->
             <div class="tools-panel">
-                <h3 style="margin-top: 0; font-size: 1.1rem;">💬 צ'אט כיתתי</h3>
+                <h3 style="margin-top: 0; font-size: 1.1rem;">💬 צ'אט וקבצים כיתתיים</h3>
                 <div class="chat-messages" id="chat-messages"></div>
                 <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="כתוב הודעה..." onkeypress="handleChatKey(event)">
-                    <button onclick="sendChatMessage()">שלח</button>
+                    <div class="chat-row">
+                        <input type="text" id="chat-input" placeholder="כתוב הודעה..." onkeypress="handleChatKey(event)">
+                        <button onclick="sendChatMessage()">שלח</button>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: #94a3b8;">
+                        <span>צרף קובץ/תמונה:</span>
+                        <input type="file" id="file-input" onchange="sendFile(event)" style="font-size: 0.8rem; padding: 4px; margin: 0; background: #0f172a;">
+                    </div>
                 </div>
             </div>
         </div>
@@ -214,20 +240,18 @@
         let peer;
         let myStream;
         let myName = "";
-        let connections = {}; // שמירת חיבורי הנתונים (Data Connections) לצ'אט ולוח
-        let activeCalls = {}; // שמירת שיחות הוידאו
+        let connections = {}; 
+        let activeCalls = {}; 
+        let mediaRecorder;
+        let recordedChunks = [];
 
         const videoGrid = document.getElementById('video-grid');
         const localVideo = document.getElementById('local-video');
         const chatMessages = document.getElementById('chat-messages');
 
-        // פתיחת מצלמה בטעינה ראשונית
         function startApp() {
             myName = document.getElementById('my-name').value.trim();
-            if (!myName) {
-                alert("נא להזין שם מלא");
-                return;
-            }
+            if (!myName) { alert("נא להזין שם מלא"); return; }
 
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
@@ -245,13 +269,12 @@
         }
 
         function initPeerServer(roomId = null) {
-            peer = new Peer(roomId); // אם אין ID, ייווצר ID חדש (למורה)
+            peer = new Peer(roomId);
 
             peer.on('open', (id) => {
                 document.getElementById('room-info').innerHTML = `קוד החדר שלך (שלח לתלמידים): <b>${id}</b>`;
             });
 
-            // האזנה לשיחות וידאו נכנסות
             peer.on('call', (call) => {
                 call.answer(myStream);
                 call.on('stream', (remoteStream) => {
@@ -260,7 +283,6 @@
                 activeCalls[call.peer] = call;
             });
 
-            // האזנה לחיבורי נתונים (צ'אט / לוח)
             peer.on('connection', (conn) => {
                 setupDataConnection(conn);
             });
@@ -268,16 +290,11 @@
 
         function joinClassRoom() {
             const targetId = document.getElementById('target-room-input').value.trim();
-            if (!targetId) {
-                alert("נא להזין קוד חדר תקין");
-                return;
-            }
+            if (!targetId) { alert("נא להזין קוד חדר תקין"); return; }
 
-            // התחברות קודם לערוץ הנתונים עם המורה/החדר
             const conn = peer.connect(targetId, { metadata: { name: myName } });
             setupDataConnection(conn);
 
-            // חיוג וידאו לחדר
             const call = peer.call(targetId, myStream, { metadata: { name: myName } });
             call.on('stream', (remoteStream) => {
                 addVideoStream(targetId, remoteStream, "מארח החדר");
@@ -291,15 +308,16 @@
             conn.on('data', (data) => {
                 if (data.type === 'chat') {
                     appendChatMessage(data.name, data.text);
+                } else if (data.type === 'file') {
+                    appendFileMessage(data.name, data.fileName, data.fileData, data.fileType);
                 } else if (data.type === 'draw') {
                     drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, false);
                 }
             });
         }
 
-        // הוספת מסך וידאו לגריד
         function addVideoStream(peerId, stream, name) {
-            if (document.getElementById('video-' + peerId)) return; // אם כבר קיים
+            if (document.getElementById('video-' + peerId)) return;
 
             const box = document.createElement('div');
             box.className = 'video-box';
@@ -319,58 +337,112 @@
             videoGrid.appendChild(box);
         }
 
-        // --- ניהול צ'אט ---
+        // --- בקרת שמע ווידאו אישיים ---
+        function toggleMic() {
+            const audioTrack = myStream.getAudioTracks()[0];
+            audioTrack.enabled = !audioTrack.enabled;
+            document.getElementById('mic-btn').innerText = audioTrack.enabled ? "🎤 השתק מיקרופון" : "🎤 הפעל מיקרופון";
+            document.getElementById('mic-btn').style.background = audioTrack.enabled ? "#3b82f6" : "#ef4444";
+        }
+
+        function toggleCamera() {
+            const videoTrack = myStream.getVideoTracks()[0];
+            videoTrack.enabled = !videoTrack.enabled;
+            document.getElementById('cam-btn').innerText = videoTrack.enabled ? "📹 לכבות מצלמה" : "📹 הדלק מצלמה";
+            document.getElementById('cam-btn').style.background = videoTrack.enabled ? "#3b82f6" : "#ef4444";
+        }
+
+        // --- ניהול צ'אט וקבצים ---
         function sendChatMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text) return;
 
             appendChatMessage("אני", text);
-
-            // שליחת ההודעה לכל המחוברים בחדר
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'chat', name: myName, text: text });
             }
-
             input.value = '';
         }
 
-        function handleChatKey(e) {
-            if (e.key === 'Enter') sendChatMessage();
-        }
+        function handleChatKey(e) { if (e.key === 'Enter') sendChatMessage(); }
 
         function appendChatMessage(sender, text) {
             chatMessages.innerHTML += `<div><b>${sender}:</b> ${text}</div>`;
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // --- שיתוף מסך ---
-        function toggleScreenShare() {
-            navigator.mediaDevices.getDisplayMedia({ cursor: true })
-                .then(screenStream => {
-                    const screenTrack = screenStream.getVideoTracks()[0];
-                    
-                    // החלפת הטרק בכל השיחות הפעילות
-                    for (let peerId in activeCalls) {
-                        const sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track.kind === 'video');
-                        if (sender) sender.replaceTrack(screenTrack);
-                    }
+        function sendFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-                    localVideo.srcObject = screenStream;
-
-                    screenTrack.onended = () => {
-                        // החזרה למצלמה הרגילה כשהשיתוף נפסק
-                        for (let peerId in activeCalls) {
-                            const sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track.kind === 'video');
-                            if (sender) sender.replaceTrack(myStream.getVideoTracks()[0]);
-                        }
-                        localVideo.srcObject = myStream;
-                    };
-                })
-                .catch(err => console.log("שיתוף מסך בוטל או נכשל", err));
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const fileData = e.target.result;
+                appendFileMessage("אני", file.name, fileData, file.type);
+                
+                for (let peerId in connections) {
+                    connections[peerId].send({ type: 'file', name: myName, fileName: file.name, fileData: fileData, fileType: file.type });
+                }
+            };
+            reader.readAsDataURL(file);
         }
 
-        // --- לוח לבן שיתופי ---
+        function appendFileMessage(sender, fileName, fileData, fileType) {
+            let content = `<a href="${fileData}" download="${fileName}" style="color: #60a5fa; text-decoration: underline;">📄 ${fileName} (הורד קובץ)</a>`;
+            chatMessages.innerHTML += `<div><b>${sender}:</b> צרף קובץ:<br>${content}</div>`;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // --- הקלטת שיעור ---
+        function toggleRecording() {
+            const btn = document.getElementById('record-btn');
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                recordedChunks = [];
+                // הקלטת המסך המשותף או זרם הווידאו
+                navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(stream => {
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'class-recording.webm';
+                        a.click();
+                    };
+                    mediaRecorder.start();
+                    btn.innerText = "⏹️ עצור ושמור הקלטה";
+                    btn.className = "danger";
+                }).catch(err => alert("הקלטת המסך בוטלה או נכשלה: " + err.message));
+            } else {
+                mediaRecorder.stop();
+                btn.innerText = "⏺️ התחל הקלטה";
+                btn.className = "success";
+            }
+        }
+
+        // --- שיתוף מסך ---
+        function toggleScreenShare() {
+            navigator.mediaDevices.getDisplayMedia({ cursor: true }).then(screenStream => {
+                const screenTrack = screenStream.getVideoTracks()[0];
+                for (let peerId in activeCalls) {
+                    const sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track.kind === 'video');
+                    if (sender) sender.replaceTrack(screenTrack);
+                }
+                localVideo.srcObject = screenStream;
+
+                screenTrack.onended = () => {
+                    for (let peerId in activeCalls) {
+                        const sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track.kind === 'video');
+                        if (sender) sender.replaceTrack(myStream.getVideoTracks()[0]);
+                    }
+                    localVideo.srcObject = myStream;
+                };
+            }).catch(err => console.log("שיתוף מסך בוטל", err));
+        }
+
+        // --- לוח לבן ---
         const whiteboardContainer = document.getElementById('whiteboard-container');
         const canvas = document.getElementById('whiteboard');
         const ctx = canvas.getContext('2d');
@@ -381,17 +453,12 @@
             whiteboardContainer.style.display = whiteboardContainer.style.display === 'none' ? 'block' : 'none';
         }
 
-        canvas.addEventListener('mousedown', (e) => {
-            drawing = true;
-            [lastX, lastY] = [e.offsetX, e.offsetY];
-        });
-
+        canvas.addEventListener('mousedown', (e) => { drawing = true; [lastX, lastY] = [e.offsetX, e.offsetY]; });
         canvas.addEventListener('mousemove', (e) => {
             if (!drawing) return;
             drawLineOnCanvas(lastX, lastY, e.offsetX, e.offsetY, '#000000', true);
             [lastX, lastY] = [e.offsetX, e.offsetY];
         });
-
         window.addEventListener('mouseup', () => drawing = false);
 
         function drawLineOnCanvas(x0, y0, x1, y1, color, broadcast) {
@@ -410,9 +477,7 @@
             }
         }
 
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
     </script>
 </body>
 </html>
