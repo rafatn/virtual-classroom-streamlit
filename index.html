@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - צבעים ייחודיים למשתתפים</title>
+    <title>כיתה וירטואלית אולטימטיבית - גירסה מתקדמת</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -33,6 +33,18 @@
             --shadow-float: 0 20px 35px -10px rgba(0, 0, 0, 0.6);
         }
 
+        [data-theme="light"] {
+            --bg-base: #f1f5f9;
+            --bg-surface: #ffffff;
+            --bg-card: #e2e8f0;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --border-hover: rgba(99, 102, 241, 0.5);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
+            --shadow-float: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+        }
+
         * {
             box-sizing: border-box;
             scrollbar-width: thin;
@@ -49,16 +61,9 @@
             border-radius: 10px;
         }
 
-        *::-webkit-scrollbar-thumb:hover {
-            background: var(--accent);
-        }
-
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-base);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 40%);
             color: var(--text-main);
             margin: 0;
             padding: 24px;
@@ -66,11 +71,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container {
             width: 100%;
-            max-width: 1560px;
+            max-width: 1600px;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -83,7 +89,9 @@
         }
 
         header.app-header {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 2px;
         }
 
@@ -95,11 +103,10 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin: 0;
-            filter: drop-shadow(0 2px 15px rgba(129, 140, 248, 0.3));
         }
 
         .glass-card {
-            background: rgba(15, 23, 42, 0.75);
+            background: var(--bg-surface);
             border: 1px solid var(--border-color);
             padding: 35px;
             border-radius: var(--radius-xl);
@@ -107,29 +114,24 @@
             text-align: center;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, background-color 0.3s;
         }
 
-        .glass-card:hover {
-            border-color: rgba(255, 255, 255, 0.12);
-        }
-
-        input, select {
+        input, select, textarea {
             padding: 12px 18px;
             margin: 8px;
             border-radius: var(--radius-md);
             border: 1px solid var(--border-color);
-            background: rgba(6, 9, 19, 0.6);
+            background: var(--bg-base);
             color: var(--text-main);
             font-size: 0.95rem;
             outline: none;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        input:focus, select:focus {
+        input:focus, select:focus, textarea:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 4px var(--accent-glow);
-            background: rgba(6, 9, 19, 0.9);
         }
 
         button {
@@ -156,18 +158,9 @@
             box-shadow: 0 6px 20px var(--accent-glow);
         }
 
-        button:active {
-            transform: translateY(0);
-        }
-
         .btn-danger { background: var(--danger); box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3); }
-        .btn-danger:hover { background: #e11d48; box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4); }
-        
         .btn-success { background: var(--success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
-        .btn-success:hover { background: #059669; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
-        
         .btn-warning { background: var(--warning); color: #000; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
-        .btn-warning:hover { background: #d97706; box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4); }
 
         .main-layout {
             display: none;
@@ -186,30 +179,28 @@
         }
 
         .controls-bar {
-            background: rgba(15, 23, 42, 0.85);
+            background: var(--bg-surface);
             border: 1px solid var(--border-color);
             padding: 10px 16px;
             border-radius: var(--radius-lg);
             display: flex;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
             box-shadow: var(--shadow-subtle);
-            backdrop-filter: blur(12px);
         }
 
         .controls-bar button {
-            background: rgba(30, 41, 59, 0.8);
+            background: var(--bg-card);
+            color: var(--text-main);
             border: 1px solid var(--border-color);
             font-size: 0.85rem;
-            padding: 8px 14px;
+            padding: 8px 12px;
             box-shadow: none;
         }
 
         .controls-bar button:hover {
-            background: rgba(51, 65, 85, 1);
             border-color: var(--border-hover);
-            transform: translateY(-1px);
         }
 
         .video-grid {
@@ -230,10 +221,9 @@
             box-shadow: var(--shadow-subtle);
         }
 
-        .video-box:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px var(--accent-glow);
+        .video-box.speaking {
+            border-color: var(--success);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
         }
 
         .video-box.spotlight {
@@ -252,19 +242,14 @@
             filter: blur(12px) saturate(1.3);
         }
 
-        .audio-only-mode video {
-            display: none !important;
-        }
-
         .audio-only-placeholder {
             display: none;
             width: 100%;
             height: 100%;
             align-items: center;
             justify-content: center;
-            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            background: radial-gradient(circle, var(--bg-card) 0%, var(--bg-surface) 100%);
             font-size: 3.5rem;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
         }
 
         .audio-only-mode .audio-only-placeholder {
@@ -277,7 +262,6 @@
             right: 12px;
             background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             padding: 6px 14px;
             font-size: 0.85rem;
             font-weight: 700;
@@ -287,20 +271,57 @@
             align-items: center;
             border: 1px solid rgba(255, 255, 255, 0.08);
             z-index: 5;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-            box-shadow: 0 0 8px var(--success);
+        /* ריחוף אמוג'י תגובות */
+        .floating-reaction {
+            position: absolute;
+            bottom: 50px;
+            right: 20px;
+            font-size: 2.5rem;
+            animation: floatUpEmoji 1.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 20;
         }
 
-        .status-dot.muted {
-            background: var(--danger);
-            box-shadow: 0 0 8px var(--danger);
+        @keyframes floatUpEmoji {
+            0% { opacity: 1; transform: translateY(0) scale(0.6); }
+            50% { transform: translateY(-70px) scale(1.2) rotate(10deg); }
+            100% { opacity: 0; transform: translateY(-140px) scale(1) rotate(-10deg); }
+        }
+
+        .reactions-bar {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            display: flex;
+            gap: 4px;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .video-box:hover .reactions-bar {
+            opacity: 1;
+        }
+
+        .reaction-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 2px;
+            margin: 0;
+            box-shadow: none;
+        }
+        .reaction-btn:hover {
+            transform: scale(1.25);
+            background: none;
         }
 
         .live-subtitle-overlay {
@@ -309,7 +330,6 @@
             left: 50%;
             transform: translateX(-50%);
             background: rgba(15, 23, 42, 0.92);
-            backdrop-filter: blur(10px);
             color: #38bdf8;
             padding: 8px 18px;
             border-radius: var(--radius-md);
@@ -321,13 +341,6 @@
             display: none;
             pointer-events: none;
             border: 1px solid rgba(56, 189, 248, 0.3);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-            animation: popUp 0.2s ease-out;
-        }
-
-        @keyframes popUp {
-            from { opacity: 0; transform: translate(-50%, 10px); }
-            to { opacity: 1; transform: translate(-50%, 0); }
         }
 
         #whiteboard-container {
@@ -337,7 +350,6 @@
             padding: 18px;
             text-align: center;
             box-shadow: var(--shadow-float);
-            animation: fadeIn 0.3s ease-out;
         }
 
         .whiteboard-toolbar {
@@ -355,7 +367,6 @@
             border-radius: var(--radius-md);
             cursor: crosshair;
             max-width: 100%;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);
         }
 
         .sidebar-panels {
@@ -365,18 +376,12 @@
         }
 
         .panel-box {
-            background: rgba(15, 23, 42, 0.8);
+            background: var(--bg-surface);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
             padding: 18px;
             box-shadow: var(--shadow-subtle);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            transition: border-color 0.3s;
-        }
-
-        .panel-box:hover {
-            border-color: rgba(255, 255, 255, 0.1);
         }
 
         .panel-box h3 {
@@ -387,14 +392,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            letter-spacing: -0.2px;
         }
 
         .list-container {
             list-style: none;
             padding: 0;
             margin: 0;
-            max-height: 160px;
+            max-height: 150px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -403,26 +407,21 @@
 
         .list-container li {
             padding: 10px 14px;
-            background: rgba(30, 41, 59, 0.6);
+            background: var(--bg-card);
             border-radius: var(--radius-sm);
             border: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.85rem;
-            transition: background 0.2s;
-        }
-
-        .list-container li:hover {
-            background: rgba(51, 65, 85, 0.7);
         }
 
         .chat-messages {
-            background: rgba(6, 9, 19, 0.6);
+            background: var(--bg-base);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             padding: 12px;
-            height: 190px;
+            height: 170px;
             overflow-y: auto;
             margin-bottom: 12px;
             font-size: 0.85rem;
@@ -433,7 +432,7 @@
 
         .chat-msg-item {
             padding: 8px 12px;
-            background: rgba(30, 41, 59, 0.7);
+            background: var(--bg-card);
             border-radius: var(--radius-sm);
             border-right: 3px solid var(--accent);
             line-height: 1.4;
@@ -450,11 +449,6 @@
             padding: 9px 14px;
         }
 
-        .chat-input-row button {
-            margin: 0;
-            padding: 9px 16px;
-        }
-
         #toast-container {
             position: fixed;
             top: 24px;
@@ -467,7 +461,7 @@
         }
 
         .toast {
-            background: rgba(15, 23, 42, 0.95);
+            background: var(--bg-surface);
             color: var(--text-main);
             border: 1px solid rgba(99, 102, 241, 0.3);
             padding: 14px 22px;
@@ -478,19 +472,13 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            backdrop-filter: blur(12px);
             pointer-events: auto;
-            animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards, fadeOut 0.3s ease 3.7s forwards;
+            animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(-40px) scale(0.95); }
             to { opacity: 1; transform: translateX(0) scale(1); }
-        }
-
-        @keyframes fadeOut {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(-30px); scale(0.95); }
         }
 
         #waiting-room-screen {
@@ -500,13 +488,14 @@
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
     <div id="toast-container"></div>
 
     <div class="container">
         <header class="app-header">
             <h2>🎓 כיתה וירטואלית אולטימטיבית</h2>
+            <button onclick="toggleTheme()" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); font-size: 0.85rem; padding: 6px 12px;">🌓 מצב תצוגה</button>
         </header>
 
         <!-- מסך התחברות -->
@@ -555,8 +544,14 @@
                         <video id="local-video" autoplay muted playsinline></video>
                         <div class="audio-only-placeholder">🎙️</div>
                         <div class="live-subtitle-overlay" id="local-subtitle"></div>
+                        <div class="reactions-bar">
+                            <button class="reaction-btn" onclick="sendReaction('❤️', event)">❤️</button>
+                            <button class="reaction-btn" onclick="sendReaction('👍', event)">👍</button>
+                            <button class="reaction-btn" onclick="sendReaction('😂', event)">😂</button>
+                            <button class="reaction-btn" onclick="sendReaction('👏', event)">👏</button>
+                        </div>
                         <div class="video-label" id="local-video-label">
-                            <span class="status-dot" id="local-status-dot"></span>
+                            <span class="status-dot" id="local-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--success);"></span>
                             <span id="local-name-text">אני</span>
                             <span id="local-hand-icon"></span>
                         </div>
@@ -595,7 +590,7 @@
                 <div class="panel-box">
                     <h3>⏱️ כלי הוראה חכמים</h3>
                     <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(6, 9, 19, 0.6); padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-base); padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
                             <span>טיימר: <b id="timer-display" style="color: var(--success); font-size: 0.95rem;">00:00</b></span>
                             <div style="display: flex; gap: 6px;">
                                 <button onclick="startTimer(300)" style="font-size: 0.75rem; padding: 5px 10px; margin: 0;">5 דק'</button>
@@ -610,14 +605,21 @@
                 <div class="panel-box">
                     <h3>
                         <span>📝 תמלול חי</span>
-                        <div style="display: flex; gap: 6px;">
-                            <button id="stt-btn" onclick="toggleSpeechToText()" style="font-size: 0.75rem; padding: 4px 8px; margin: 0; background: #0284c7;">הפעל</button>
-                            <button onclick="downloadTranscript()" style="font-size: 0.75rem; padding: 4px 8px; margin: 0; background: var(--success);">שמור</button>
+                        <div style="display: flex; gap: 4px;">
+                            <button id="stt-btn" onclick="toggleSpeechToText()" style="font-size: 0.7rem; padding: 4px 8px; margin: 0; background: #0284c7;">הפעל</button>
+                            <button onclick="downloadTranscript()" style="font-size: 0.7rem; padding: 4px 8px; margin: 0; background: var(--success);">טקסט</button>
+                            <button onclick="downloadTranscriptWord()" style="font-size: 0.7rem; padding: 4px 8px; margin: 0; background: #8b5cf6;">Word</button>
                         </div>
                     </h3>
-                    <div id="transcript-box" style="background: rgba(6, 9, 19, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px; font-size: 0.8rem; height: 85px; overflow-y: auto; color: var(--text-muted); text-align: right; line-height: 1.4;">
+                    <div id="transcript-box" style="background: var(--bg-base); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px; font-size: 0.8rem; height: 80px; overflow-y: auto; color: var(--text-muted); text-align: right; line-height: 1.4;">
                         לחץ על "הפעל" לתמלול קולי אוטומטי...
                     </div>
+                </div>
+
+                <!-- הערות אישיות -->
+                <div class="panel-box">
+                    <h3>📓 הערות אישיות</h3>
+                    <textarea id="personal-notes" placeholder="רשום לעצמך הערות לשיעור כאן..." style="width: 100%; height: 90px; resize: none; font-size: 0.85rem; margin: 0; padding: 8px;" oninput="savePersonalNotes()"></textarea>
                 </div>
 
                 <!-- חדר המתנה למורה -->
@@ -630,7 +632,7 @@
                 <div class="panel-box">
                     <h3>
                         <span>👥 משתתפים (<span id="participant-count">1</span>)</span>
-                        <button onclick="openPollModal()" style="font-size: 0.75rem; padding: 4px 8px; margin: 0; background: #8b5cf6;">📊 סקר</button>
+                        <button onclick="openPollModal()" style="font-size: 0.7rem; padding: 4px 8px; margin: 0; background: #8b5cf6;">📊 סקר</button>
                     </h3>
                     <ul class="list-container" id="participants-list"></ul>
                 </div>
@@ -678,16 +680,9 @@
         let pageRendering = false;
         let pageNumPending = null;
 
-        // פלטת צבעים זוהרים ייחודיים לכל משתתף
         const userColors = [
-            '#38bdf8', // תכלת עמוק
-            '#f472b6', // ורוד פסטלי
-            '#34d399', // ירוק מנטה
-            '#fbbf24', // זהב-כתום
-            '#c084fc', // סגול לילך
-            '#fb7185', // אדום-קורל
-            '#2dd4bf', // טורקיז
-            '#818cf8'  // אינדיגו בהיר
+            '#38bdf8', '#f472b6', '#34d399', '#fbbf24', 
+            '#c084fc', '#fb7185', '#2dd4bf', '#818cf8'
         ];
 
         function getUserColor(id) {
@@ -695,13 +690,21 @@
             for (let i = 0; i < id.length; i++) {
                 hash = id.charCodeAt(i) + ((hash << 5) - hash);
             }
-            let index = Math.abs(hash) % userColors.length;
-            return userColors[index];
+            return userColors[Math.abs(hash) % userColors.length];
         }
 
         const videoGrid = document.getElementById('video-grid');
         const localVideo = document.getElementById('local-video');
         const chatMessages = document.getElementById('chat-messages');
+
+        function toggleTheme() {
+            const body = document.body;
+            if (body.getAttribute("data-theme") === "dark") {
+                body.setAttribute("data-theme", "light");
+            } else {
+                body.setAttribute("data-theme", "dark");
+            }
+        }
 
         function startApp() {
             myName = document.getElementById('my-name').value.trim();
@@ -718,15 +721,72 @@
 
                 participantsData['local'] = { name: myName, mic: true, cam: true, hand: false, color: localColor };
                 updateParticipantsUI();
+                initAudioActivityDetector(stream, 'local-video-box');
 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('room-controls').style.display = 'block';
                 document.getElementById('main-layout').style.display = 'grid';
 
                 loadChatHistory();
+                loadPersonalNotes();
                 initPeerServer();
                 initSpeechRecognition();
             }).catch(err => alert("שגיאה בגישה למצלמה: " + err.message));
+        }
+
+        function initAudioActivityDetector(stream, boxId) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const analyser = audioCtx.createAnalyser();
+                const microphone = audioCtx.createMediaStreamSource(stream);
+                microphone.connect(analyser);
+                analyser.fftSize = 256;
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                function checkAudio() {
+                    analyser.getByteFrequencyData(dataArray);
+                    let sum = dataArray.reduce((a, b) => a + b, 0);
+                    let average = sum / dataArray.length;
+                    const box = document.getElementById(boxId);
+                    if (box) {
+                        if (average > 12) {
+                            box.classList.add('speaking');
+                        } else {
+                            box.classList.remove('speaking');
+                        }
+                    }
+                    requestAnimationFrame(checkAudio);
+                }
+                checkAudio();
+            } catch (e) {}
+        }
+
+        function sendReaction(emoji, event) {
+            event.stopPropagation();
+            displayFloatingReaction('local-video-box', emoji);
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'reaction', emoji: emoji });
+            }
+        }
+
+        function displayFloatingReaction(boxId, emoji) {
+            const box = document.getElementById(boxId);
+            if (!box) return;
+            const span = document.createElement('div');
+            span.className = 'floating-reaction';
+            span.innerText = emoji;
+            box.appendChild(span);
+            setTimeout(() => span.remove(), 1500);
+        }
+
+        function savePersonalNotes() {
+            const notes = document.getElementById('personal-notes').value;
+            localStorage.setItem('class_personal_notes', notes);
+        }
+
+        function loadPersonalNotes() {
+            const notes = localStorage.getItem('class_personal_notes') || '';
+            document.getElementById('personal-notes').value = notes;
         }
 
         function startTimer(seconds) {
@@ -785,7 +845,6 @@
             recognition.onresult = (event) => {
                 let interimText = '';
                 let finalText = '';
-
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
                         finalText += event.results[i][0].transcript + ' ';
@@ -793,22 +852,18 @@
                         interimText += event.results[i][0].transcript;
                     }
                 }
-
                 if (finalText) {
                     fullTranscriptText += `${myName}: ${finalText}\n`;
                     for (let peerId in connections) {
                         connections[peerId].send({ type: 'transcript', text: `${myName}: ${finalText}` });
                     }
                 }
-
                 updateTranscriptBox(fullTranscriptText + interimText);
                 showLiveSubtitle(interimText || finalText);
             };
 
             recognition.onend = () => {
-                if (isTranscribing) {
-                    try { recognition.start(); } catch (e) {}
-                }
+                if (isTranscribing) { try { recognition.start(); } catch (e) {} }
             };
         }
 
@@ -819,27 +874,13 @@
         }
 
         function toggleSpeechToText() {
-            if (!recognition) {
-                alert("הדפדפן שלך אינו תומך בתמלול אוטומטי (מומלץ Google Chrome).");
-                return;
-            }
-
+            if (!recognition) { alert("הדפדפן אינו תומך בתמלול."); return; }
             const btn = document.getElementById('stt-btn');
             isTranscribing = !isTranscribing;
-
             if (isTranscribing) {
-                try {
-                    recognition.start();
-                    btn.innerText = "עצור";
-                    btn.style.background = "var(--danger)";
-                    showToast("🎙️ תמלול וכתוביות הופעלו");
-                } catch (e) {}
+                try { recognition.start(); btn.innerText = "עצור"; btn.style.background = "var(--danger)"; showToast("🎙️ תמלול הופעל"); } catch (e) {}
             } else {
-                recognition.stop();
-                btn.innerText = "הפעל";
-                btn.style.background = "#0284c7";
-                showLiveSubtitle("");
-                showToast("⏹️ תמלול הופסק");
+                recognition.stop(); btn.innerText = "הפעל"; btn.style.background = "#0284c7"; showLiveSubtitle(""); showToast("⏹️ תמלול הופסק");
             }
         }
 
@@ -850,24 +891,26 @@
         }
 
         function downloadTranscript() {
-            if (!fullTranscriptText.trim()) { alert("אין עדיין טקסט שמור להורדה"); return; }
+            if (!fullTranscriptText.trim()) { alert("אין טקסט שמור להורדה"); return; }
             const blob = new Blob([fullTranscriptText], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'lesson-transcript.txt';
-            a.click();
-            showToast("💾 סיכום השיעור הורד בהצלחה!");
+            const a = document.createElement('a'); a.href = url; a.download = 'transcript.txt'; a.click();
+            showToast("💾 סיכום השיעור הורד!");
+        }
+
+        function downloadTranscriptWord() {
+            if (!fullTranscriptText.trim()) { alert("אין טקסט שמור להורדה"); return; }
+            const htmlContent = `<html dir="rtl"><head><meta charset="UTF-8"><title>סיכום שיעור</title></head><body style="font-family:Arial;"><h2>סיכום שיעור וירטואלי</h2><p>${fullTranscriptText.replace(/\n/g, '<br>')}</p></body></html>`;
+            const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'lesson-summary.doc'; a.click();
+            showToast("📄 סיכום הורד כקובץ Word!");
         }
 
         function getMediaStreamWithQuality(quality) {
             let constraints = { video: true, audio: true };
-            if (quality === 'low') {
-                constraints.video = { width: { ideal: 320 }, height: { ideal: 180 }, frameRate: { max: 15 } };
-            } else if (quality === 'sd') {
+            if (quality === 'sd') {
                 constraints.video = { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { max: 24 } };
-            } else if (quality === 'hd') {
-                constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { max: 30 } };
             }
             return navigator.mediaDevices.getUserMedia(constraints);
         }
@@ -885,6 +928,8 @@
                         waitingQueue[conn.peer] = { name: data.name, conn: conn };
                         updateWaitingUI();
                         showToast(`⏳ ${data.name} ממתין בכניסה`);
+                    } else if (data.type === 'reaction') {
+                        displayFloatingReaction('video-' + conn.peer, data.emoji);
                     } else if (data.type === 'transcript') {
                         fullTranscriptText += `${data.text}\n`;
                         updateTranscriptBox(fullTranscriptText);
@@ -910,6 +955,7 @@
                     participantsData[call.peer] = { name: remoteName, mic: true, cam: true, hand: false, color: remoteColor };
                     addVideoStream(call.peer, remoteStream, remoteName, remoteColor);
                     updateParticipantsUI();
+                    initAudioActivityDetector(remoteStream, 'video-' + call.peer);
                 });
                 activeCalls[call.peer] = call;
             });
@@ -942,6 +988,7 @@
                         participantsData[targetId] = { name: "מארח החדר", mic: true, cam: true, hand: false, color: hostColor };
                         addVideoStream(targetId, remoteStream, "מארח החדר", hostColor);
                         updateParticipantsUI();
+                        initAudioActivityDetector(remoteStream, 'video-' + targetId);
                     });
                     activeCalls[targetId] = call;
                 } else if (data.type === 'rejected') {
@@ -955,7 +1002,6 @@
             const panel = document.getElementById('waiting-panel');
             const listEl = document.getElementById('waiting-list');
             const countEl = document.getElementById('waiting-count');
-            
             let keys = Object.keys(waitingQueue);
             if (keys.length > 0) {
                 panel.style.display = 'block';
@@ -1002,6 +1048,8 @@
         function handleIncomingData(conn, data) {
             if (data.type === 'chat') {
                 saveAndAppendMessage(data.name, data.text);
+            } else if (data.type === 'reaction') {
+                displayFloatingReaction('video-' + conn.peer, data.emoji);
             } else if (data.type === 'transcript') {
                 fullTranscriptText += `${data.text}\n`;
                 updateTranscriptBox(fullTranscriptText);
@@ -1017,9 +1065,6 @@
                 if (participantsData[conn.peer]) {
                     participantsData[conn.peer].name = data.name;
                     updateParticipantsUI();
-                    // עדכון שֵM גם בתווית הווידאו
-                    const labelSpan = document.querySelector(`#video-${conn.peer} .video-label span:nth-child(2)`);
-                    if (labelSpan) labelSpan.innerText = data.name;
                 }
             } else if (data.type === 'new-poll') {
                 currentPoll = data.poll;
@@ -1050,14 +1095,23 @@
             placeholder.className = 'audio-only-placeholder';
             placeholder.innerHTML = '🎙️';
 
+            const reactionsBar = document.createElement('div');
+            reactionsBar.className = 'reactions-bar';
+            reactionsBar.innerHTML = `
+                <button class="reaction-btn" onclick="sendReaction('❤️', event)">❤️</button>
+                <button class="reaction-btn" onclick="sendReaction('👍', event)">👍</button>
+                <button class="reaction-btn" onclick="sendReaction('😂', event)">😂</button>
+                <button class="reaction-btn" onclick="sendReaction('👏', event)">👏</button>
+            `;
+
             const label = document.createElement('div');
             label.className = 'video-label';
             label.style.borderColor = color;
-
-            label.innerHTML = `<span class="status-dot"></span><span style="color:${color};">${name}</span>`;
+            label.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:var(--success);"></span><span style="color:${color};">${name}</span>`;
 
             box.appendChild(video);
             box.appendChild(placeholder);
+            box.appendChild(reactionsBar);
             box.appendChild(label);
             videoGrid.appendChild(box);
         }
@@ -1066,7 +1120,6 @@
             const listEl = document.getElementById('participants-list');
             let html = "";
             let count = 0;
-
             for (let id in participantsData) {
                 count++;
                 let p = participantsData[id];
@@ -1077,13 +1130,6 @@
             }
             listEl.innerHTML = html;
             document.getElementById('participant-count').innerText = count;
-
-            const localDot = document.getElementById('local-status-dot');
-            if (participantsData['local'].mic) {
-                localDot.className = "status-dot";
-            } else {
-                localDot.className = "status-dot muted";
-            }
         }
 
         function toggleBackgroundBlur() {
@@ -1097,7 +1143,6 @@
             const opt1 = prompt("תשובה 1:");
             const opt2 = prompt("תשובה 2:");
             if (!opt1 || !opt2) return;
-
             currentPoll = { question, options: [opt1, opt2], votes: [0, 0] };
             renderPoll();
             for (let peerId in connections) {
@@ -1110,13 +1155,12 @@
             const area = document.getElementById('poll-area');
             const content = document.getElementById('poll-content');
             area.style.display = 'block';
-
             let totalVotes = currentPoll.votes.reduce((a, b) => a + b, 0);
             let html = `<p style="margin: 0 0 10px; font-weight: bold; color: var(--text-main);">${currentPoll.question}</p>`;
             currentPoll.options.forEach((opt, index) => {
                 let votesCount = currentPoll.votes[index];
                 let percent = totalVotes > 0 ? Math.round((votesCount / totalVotes) * 100) : 0;
-                html += `<div style="margin-bottom: 6px;"><button onclick="votePoll(${index})" style="width: 100%; text-align: right; padding: 10px 12px; background: rgba(6, 9, 19, 0.6); border: 1px solid var(--border-color); font-size: 0.85rem; margin: 0; border-radius: var(--radius-sm);">${opt} (${percent}% - ${votesCount})</button></div>`;
+                html += `<div style="margin-bottom: 6px;"><button onclick="votePoll(${index})" style="width: 100%; text-align: right; padding: 10px 12px; background: var(--bg-base); border: 1px solid var(--border-color); font-size: 0.85rem; margin: 0; border-radius: var(--radius-sm); color:var(--text-main);">${opt} (${percent}% - ${votesCount})</button></div>`;
             });
             content.innerHTML = html;
         }
@@ -1142,7 +1186,6 @@
             btn.className = p.hand ? "btn-success" : "btn-warning";
             btn.innerText = p.hand ? "✋ הורד יד" : "✋ הרם יד";
             updateParticipantsUI();
-
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'hand-raise', raised: p.hand });
             }
@@ -1189,12 +1232,10 @@
         function loadPDF(e) {
             const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(event) {
                 currentPdfDataUrl = event.target.result;
                 const typedarray = new Uint8Array(event.target.result);
-
                 pdfjsLib.getDocument(typedarray).promise.then(pdf => {
                     pdfDoc = pdf;
                     document.getElementById('pdf-page-count').innerText = pdf.numPages;
@@ -1213,7 +1254,6 @@
                 const viewport = page.getViewport({ scale: 1.15 });
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
-
                 const renderContext = { canvasContext: ctx, viewport: viewport };
                 page.render(renderContext).promise.then(() => {
                     pageRendering = false;
@@ -1246,7 +1286,6 @@
         function renderRemotePdfPage(pNum, pdfData) {
             document.getElementById('pdf-controls').style.display = 'block';
             whiteboardContainer.style.display = 'block';
-            
             const typedarray = new Uint8Array(pdfData);
             pdfjsLib.getDocument(typedarray).promise.then(pdf => {
                 pdfDoc = pdf;
@@ -1275,7 +1314,6 @@
             ctx.lineCap = 'round';
             ctx.stroke();
             ctx.closePath();
-
             if (broadcast) {
                 for (let peerId in connections) {
                     connections[peerId].send({ type: 'draw', x0, y0, x1, y1, color, size });
@@ -1308,7 +1346,6 @@
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'chat', name: myName, text: text });
             }
-            input.value = ``;
             input.value = '';
         }
 
@@ -1324,10 +1361,7 @@
                     mediaRecorder.onstop = () => {
                         const blob = new Blob(recordedChunks, { type: 'video/webm' });
                         const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'class-recording.webm';
-                        a.click();
+                        const a = document.createElement('a'); a.href = url; a.download = 'class-recording.webm'; a.click();
                         showToast("💾 ההקלטה נשמרה");
                     };
                     mediaRecorder.start();
@@ -1350,7 +1384,6 @@
                 }
                 localVideo.srcObject = screenStream;
                 showToast("🖥️ משתף מסך");
-
                 screenTrack.onended = () => {
                     for (let peerId in activeCalls) {
                         const sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track.kind === 'video');
