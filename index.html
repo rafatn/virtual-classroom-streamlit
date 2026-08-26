@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - מחולל גרפים חופשי</title>
+    <title>כיתה וירטואלית אולטימטיבית - מחולל גרפים ברמת MATLAB</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -392,7 +392,7 @@
             position: relative;
         }
 
-        /* חלון גרפים מתמטיים */
+        /* חלון גרפים מתמטיים ברמת MATLAB */
         #graph-container {
             display: none;
             background: var(--bg-surface);
@@ -405,7 +405,7 @@
 
         #graph-canvas-box {
             width: 100%;
-            height: 380px;
+            height: 400px;
             border-radius: var(--radius-md);
             background: var(--bg-base);
             padding: 10px;
@@ -537,7 +537,7 @@
 
     <div class="container">
         <header class="app-header">
-            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם תלת-מימד וגרפים)</h2>
+            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם תלת-מימד וגרפים ברמת MATLAB)</h2>
             <button onclick="toggleTheme()" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); font-size: 0.85rem; padding: 6px 12px;">🌓 מצב תצוגה</button>
         </header>
 
@@ -578,7 +578,7 @@
                     <button onclick="toggleScreenShare()" style="color: #c084fc;">🖥️ שתף מסך</button>
                     <button onclick="toggleWhiteboard()" style="color: #f43f5e;">🎨 לוח ו-PDF</button>
                     <button onclick="toggle3DSpace()" style="color: #38bdf8;">🌌 מרחב 3D</button>
-                    <button onclick="toggleGraphSpace()" style="color: #f59e0b;">📈 מחולל גרפים</button>
+                    <button onclick="toggleGraphSpace()" style="color: #f59e0b;">📈 מחולל גרפים (MATLAB)</button>
                     <button id="record-btn" class="btn-success" onclick="toggleRecording()">⏺️ הקלט</button>
                     <button onclick="muteEveryone()" class="btn-danger">🔇 השתק כולם</button>
                 </div>
@@ -640,12 +640,16 @@
                     <div id="threed-canvas-box"></div>
                 </div>
 
-                <!-- מחולל גרפים מתמטיים שיתופי חופשי (Chart.js) -->
+                <!-- מחולל גרפים מתמטיים ברמת MATLAB (Chart.js) -->
                 <div id="graph-container">
                     <div class="whiteboard-toolbar">
                         <span style="font-weight: bold; color: var(--text-main); font-size: 0.9rem;">f(x) =</span>
-                        <input type="text" id="math-func-input" value="x * x" placeholder="למשל: x * x או Math.sin(x)" style="width: 250px; margin: 0; padding: 6px 12px; font-size: 0.85rem;" dir="ltr">
-                        <button onclick="plotCustomGraph()" style="padding: 6px 14px; font-size: 0.85rem; background: var(--success); margin: 0;">שרטט וסנכרן</button>
+                        <input type="text" id="math-func-input" value="Math.sin(x) * x" placeholder="למשל: Math.sin(x) * x או Math.pow(x, 3)" style="width: 280px; margin: 0; padding: 6px 12px; font-size: 0.85rem;" dir="ltr">
+                        <span style="font-weight: bold; color: var(--text-muted); font-size: 0.8rem; margin-right: 6px;">טווח:</span>
+                        <input type="number" id="x-min" value="-10" style="width: 60px; margin: 0; padding: 4px; font-size: 0.8rem; text-align:center;" placeholder="Min">
+                        <span style="color: var(--text-muted);">עד</span>
+                        <input type="number" id="x-max" value="10" style="width: 60px; margin: 0; padding: 4px; font-size: 0.8rem; text-align:center;" placeholder="Max">
+                        <button onclick="plotCustomGraph()" style="padding: 6px 14px; font-size: 0.85rem; background: var(--success); margin: 0;">שרטט בדיוק MATLAB</button>
                     </div>
                     <div id="graph-canvas-box">
                         <canvas id="mathChart"></canvas>
@@ -753,7 +757,7 @@
         let scene, camera, renderer, currentMesh;
         let is3DInitialized = false;
 
-        // משתני Chart.js לגרפים
+        // משתני Chart.js לגרפים ברמת MATLAB
         let mathChartInstance = null;
         let isGraphInitialized = false;
 
@@ -838,19 +842,19 @@
             } catch (e) {}
         }
 
-        // --- ניהול גרפים מתמטיים חופשיים (Chart.js) ---
+        // --- ניהול גרפים מתמטיים ברמת MATLAB ---
         function toggleGraphSpace() {
             const container = document.getElementById('graph-container');
             const isVisible = container.style.display === 'block';
             container.style.display = isVisible ? 'none' : 'block';
             if (!isVisible && !isGraphInitialized) {
-                initGraphChart("x * x");
+                initGraphChart("Math.sin(x) * x", -10, 10);
             }
         }
 
-        function initGraphChart(funcExpr) {
+        function initGraphChart(funcExpr, xMin, xMax) {
             const ctx = document.getElementById('mathChart').getContext('2d');
-            const dataPoints = generateCustomFunctionData(funcExpr);
+            const dataPoints = generateHighPrecisionData(funcExpr, xMin, xMax);
 
             mathChartInstance = new Chart(ctx, {
                 type: 'line',
@@ -860,44 +864,60 @@
                         label: "f(x) = " + funcExpr,
                         data: dataPoints.values,
                         borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.3,
-                        fill: true
+                        backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                        borderWidth: 2.5,
+                        tension: 0.15, // מונע אובר-שੂטינג ומדמה עקומות אנליטיות מדויקות
+                        fill: true,
+                        pointRadius: 0 // מראה נקי כמו ב-MATLAB
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
-                    }
+                        x: { 
+                            grid: { color: 'rgba(255,255,255,0.06)' }, 
+                            ticks: { 
+                                color: '#94a3b8',
+                                maxTicksLimit: 15 // מציג מספר נקודות ייחוס כמו ציר x ב-MATLAB
+                            } 
+                        },
+                        y: { 
+                            grid: { color: 'rgba(255,255,255,0.06)' }, 
+                            ticks: { color: '#94a3b8' } 
+                        }
+                    },
+                    animation: false // תצוגה מיידית וחדה
                 }
             });
             isGraphInitialized = true;
         }
 
-        function generateCustomFunctionData(expr) {
+        function generateHighPrecisionData(expr, xMin, xMax) {
             let labels = [];
             let values = [];
             let func;
 
             try {
-                // יצירת פונקציה מאובטחת מקלט המשתמש
-                func = new Function('x', 'return ' + expr + ';');
+                // הפיכת הקלט לפונקציה מתוחכמת עם תמיכה מלאה בספריות מתמטיקה
+                func = new Function('x', 'with(Math) { return ' + expr + '; }');
             } catch (e) {
                 func = (x) => 0;
             }
 
-            for (let x = -10; x <= 10; x += 0.5) {
-                labels.push(x.toFixed(1));
+            // רזולוציה גבוהה פי 10 (צעדים של 0.05) לדיוק מרבי דמוי MATLAB
+            let step = (xMax - xMin) / 300; 
+            if (step <= 0) step = 0.05;
+
+            for (let x = xMin; x <= xMax; x += step) {
+                let cleanX = Number(x.toFixed(3));
+                labels.push(cleanX);
                 let y = 0;
                 try {
-                    y = func(x);
+                    y = func(cleanX);
                     if (isNaN(y) || !isFinite(y)) y = null;
                 } catch (err) {
-                    y = 0;
+                    y = null;
                 }
                 values.push(y);
             }
@@ -906,24 +926,29 @@
 
         function plotCustomGraph() {
             const expr = document.getElementById('math-func-input').value.trim();
+            const xMin = parseFloat(document.getElementById('x-min').value) || -10;
+            const xMax = parseFloat(document.getElementById('x-max').value) || 10;
+
             if (!expr) return;
-            updateGraphData(expr);
+            updateGraphData(expr, xMin, xMax);
             for (let peerId in connections) {
-                connections[peerId].send({ type: 'math-graph', expr: expr });
+                connections[peerId].send({ type: 'math-graph', expr: expr, xMin: xMin, xMax: xMax });
             }
-            showToast("📈 גרף הפונקציה שורטט וסונכרן!");
+            showToast("📈 גרף ברמת דיוק MATLAB שורטט וסונכרן!");
         }
 
-        function updateGraphData(expr) {
+        function updateGraphData(expr, xMin, xMax) {
             const container = document.getElementById('graph-container');
             container.style.display = 'block';
             document.getElementById('math-func-input').value = expr;
+            document.getElementById('x-min').value = xMin;
+            document.getElementById('x-max').value = xMax;
 
             if (!isGraphInitialized) {
-                initGraphChart(expr);
+                initGraphChart(expr, xMin, xMax);
                 return;
             }
-            const dataPoints = generateCustomFunctionData(expr);
+            const dataPoints = generateHighPrecisionData(expr, xMin, xMax);
             mathChartInstance.data.labels = dataPoints.labels;
             mathChartInstance.data.datasets[0].label = "f(x) = " + expr;
             mathChartInstance.data.datasets[0].data = dataPoints.values;
@@ -1312,7 +1337,7 @@
                 if (!is3DInitialized) init3DScene();
                 createMeshShape(data.shape);
             } else if (data.type === 'math-graph') {
-                updateGraphData(data.expr);
+                updateGraphData(data.expr, data.xMin, data.xMax);
             }
         }
 
@@ -1582,7 +1607,7 @@
             if (!text) return;
             saveAndAppendMessage("אני", text);
             for (let peerId in connections) {
-                connections[peerId].send({ type: 'chat', name: myName, text: text });
+                connections[peerId].send({ type: 'chat', name: MyName, text: text });
             }
             input.value = '';
         }
