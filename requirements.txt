@@ -1,3 +1,0 @@
-streamlit
-livekit-api
-pydantic
