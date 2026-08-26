@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית מתקדמת עם הקלטה וקבצים</title>
+    <title>כיתה וירטואלית חכמה עם התרעות ואינדיקטורים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -101,9 +101,12 @@
             bottom: 5px;
             right: 5px;
             background: rgba(0,0,0,0.7);
-            padding: 2px 6px;
+            padding: 2px 8px;
             font-size: 0.8rem;
             border-radius: 4px;
+            display: flex;
+            gap: 5px;
+            align-items: center;
         }
 
         .controls-bar {
@@ -167,12 +170,47 @@
             border-radius: 6px;
             cursor: crosshair;
         }
+
+        /* עיצוב התרעות קופצות (Toast Notifications) */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            font-size: 0.95rem;
+            animation: fadeInOut 4s ease forwards;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
     </style>
 </head>
 <body>
 
+    <!-- אזור להתרעות קופצות -->
+    <div id="toast-container"></div>
+
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית חכמה ומלאה</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית מתקדמת עם אינדיקטורים והתרעות</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -205,7 +243,10 @@
                 <div class="video-grid" id="video-grid">
                     <div class="video-box">
                         <video id="local-video" autoplay muted playsinline></video>
-                        <div class="video-label" id="local-label">אני</div>
+                        <div class="video-label" id="local-label">
+                            <span id="local-name-text">אני</span>
+                            <span id="local-status-icons"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -257,7 +298,7 @@
                 .then(stream => {
                     myStream = stream;
                     localVideo.srcObject = stream;
-                    document.getElementById('local-label').innerText = myName;
+                    document.getElementById('local-name-text').innerText = myName;
 
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('room-controls').style.display = 'block';
@@ -278,7 +319,9 @@
             peer.on('call', (call) => {
                 call.answer(myStream);
                 call.on('stream', (remoteStream) => {
-                    addVideoStream(call.peer, remoteStream, call.metadata ? call.metadata.name : "משתתף");
+                    const remoteName = call.metadata ? call.metadata.name : "משתתף";
+                    addVideoStream(call.peer, remoteStream, remoteName);
+                    showToast(`👤 ${remoteName} הצטרף לשיעור`);
                 });
                 activeCalls[call.peer] = call;
             });
@@ -298,6 +341,7 @@
             const call = peer.call(targetId, myStream, { metadata: { name: myName } });
             call.on('stream', (remoteStream) => {
                 addVideoStream(targetId, remoteStream, "מארח החדר");
+                showToast(`✅ התחברת בהצלחה לחדר השיעור!`);
             });
             activeCalls[targetId] = call;
         }
@@ -308,8 +352,10 @@
             conn.on('data', (data) => {
                 if (data.type === 'chat') {
                     appendChatMessage(data.name, data.text);
+                    showToast(`💬 הודעה חדשה מ-${data.name}`);
                 } else if (data.type === 'file') {
                     appendFileMessage(data.name, data.fileName, data.fileData, data.fileType);
+                    showToast(`📄 קובץ חדש התקבל מ-${data.name}`);
                 } else if (data.type === 'draw') {
                     drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, false);
                 }
@@ -330,26 +376,49 @@
 
             const label = document.createElement('div');
             label.className = 'video-label';
-            label.innerText = name;
+            label.innerHTML = `<span>${name}</span>`;
 
             box.appendChild(video);
             box.appendChild(label);
             videoGrid.appendChild(box);
         }
 
-        // --- בקרת שמע ווידאו אישיים ---
+        // --- בקרת שמע ווידאו אישיים + עדכון אינדיקטורים ---
         function toggleMic() {
             const audioTrack = myStream.getAudioTracks()[0];
             audioTrack.enabled = !audioTrack.enabled;
-            document.getElementById('mic-btn').innerText = audioTrack.enabled ? "🎤 השתק מיקרופון" : "🎤 הפעל מיקרופון";
-            document.getElementById('mic-btn').style.background = audioTrack.enabled ? "#3b82f6" : "#ef4444";
+            const btn = document.getElementById('mic-btn');
+            btn.innerText = audioTrack.enabled ? "🎤 השתק מיקרופון" : "🎤 הפעל מיקרופון";
+            btn.style.background = audioTrack.enabled ? "#3b82f6" : "#ef4444";
+            updateLocalStatusIcons();
         }
 
         function toggleCamera() {
             const videoTrack = myStream.getVideoTracks()[0];
             videoTrack.enabled = !videoTrack.enabled;
-            document.getElementById('cam-btn').innerText = videoTrack.enabled ? "📹 לכבות מצלמה" : "📹 הדלק מצלמה";
-            document.getElementById('cam-btn').style.background = videoTrack.enabled ? "#3b82f6" : "#ef4444";
+            const btn = document.getElementById('cam-btn');
+            btn.innerText = videoTrack.enabled ? "📹 לכבות מצלמה" : "📹 הדלק מצלמה";
+            btn.style.background = videoTrack.enabled ? "#3b82f6" : "#ef4444";
+            updateLocalStatusIcons();
+        }
+
+        function updateLocalStatusIcons() {
+            const audioTrack = myStream.getAudioTracks()[0];
+            const videoTrack = myStream.getVideoTracks()[0];
+            let icons = "";
+            if (!audioTrack.enabled) icons += " 🔇";
+            if (!videoTrack.enabled) icons += " 📷 כבובה";
+            document.getElementById('local-status-icons').innerText = icons;
+        }
+
+        // --- התרעות קופצות (Toast) ---
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `🔔 ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
         }
 
         // --- ניהול צ'אט וקבצים ---
@@ -399,7 +468,6 @@
             const btn = document.getElementById('record-btn');
             if (!mediaRecorder || mediaRecorder.state === "inactive") {
                 recordedChunks = [];
-                // הקלטת המסך המשותף או זרם הווידאו
                 navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(stream => {
                     mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
                     mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
@@ -410,10 +478,12 @@
                         a.href = url;
                         a.download = 'class-recording.webm';
                         a.click();
+                        showToast("💾 הקלטת השיעור נשמרה בהצלחה במחשבך!");
                     };
                     mediaRecorder.start();
                     btn.innerText = "⏹️ עצור ושמור הקלטה";
                     btn.className = "danger";
+                    showToast("⏺️ הקלטת השיעור החלה...");
                 }).catch(err => alert("הקלטת המסך בוטלה או נכשלה: " + err.message));
             } else {
                 mediaRecorder.stop();
@@ -431,6 +501,7 @@
                     if (sender) sender.replaceTrack(screenTrack);
                 }
                 localVideo.srcObject = screenStream;
+                showToast("🖥️ אתה משתף את המסך כעת");
 
                 screenTrack.onended = () => {
                     for (let peerId in activeCalls) {
@@ -438,6 +509,7 @@
                         if (sender) sender.replaceTrack(myStream.getVideoTracks()[0]);
                     }
                     localVideo.srcObject = myStream;
+                    showToast("🖥️ שיתוף המסך הסתיים");
                 };
             }).catch(err => console.log("שיתוף מסך בוטל", err));
         }
