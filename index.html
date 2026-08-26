@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - מחולל גרפים וניתוח מתמטי מתקדם</title>
+    <title>כיתה וירטואלית אולטימטיבית - מחולל גרפים, ניתוח ופיצ'רים מתקדמים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -372,7 +372,6 @@
             max-width: 100%;
         }
 
-        /* חלון תלת מימד */
         #threed-container {
             display: none;
             background: var(--bg-surface);
@@ -392,7 +391,6 @@
             position: relative;
         }
 
-        /* חלון גרפים מתמטיים מתקדם */
         #graph-container {
             display: none;
             background: var(--bg-surface);
@@ -464,9 +462,9 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             padding: 12px;
-            height: 170px;
+            height: 150px;
             overflow-y: auto;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             font-size: 0.85rem;
             display: flex;
             flex-direction: column;
@@ -537,7 +535,7 @@
 
     <div class="container">
         <header class="app-header">
-            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם תלת-מימד ומחולל גרפים מתקדם)</h2>
+            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם תלת-מימד, מחולל גרפים ופיצ'רים חדשים)</h2>
             <button onclick="toggleTheme()" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); font-size: 0.85rem; padding: 6px 12px;">🌓 מצב תצוגה</button>
         </header>
 
@@ -673,7 +671,7 @@
 
             <!-- פאנלים בצד -->
             <div class="sidebar-panels">
-                <!-- כלי הוראה -->
+                <!-- כלי הוראה עם שעון עצר חדש -->
                 <div class="panel-box">
                     <h3>⏱️ כלי הוראה חכמים</h3>
                     <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
@@ -682,6 +680,13 @@
                             <div style="display: flex; gap: 6px;">
                                 <button onclick="startTimer(300)" style="font-size: 0.75rem; padding: 5px 10px; margin: 0;">5 דק'</button>
                                 <button onclick="stopTimer()" class="btn-danger" style="font-size: 0.75rem; padding: 5px 10px; margin: 0;">איפוס</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-base); padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                            <span>עצר: <b id="stopwatch-display" style="color: #38bdf8; font-size: 0.95rem;">00:00:00</b></span>
+                            <div style="display: flex; gap: 4px;">
+                                <button onclick="toggleStopwatch()" id="sw-toggle-btn" style="font-size: 0.7rem; padding: 4px 8px; margin: 0; background: var(--success);">הפעל</button>
+                                <button onclick="resetStopwatch()" class="btn-danger" style="font-size: 0.7rem; padding: 4px 8px; margin: 0;">איפוס</button>
                             </div>
                         </div>
                         <button onclick="pickRandomStudent()" class="btn-warning" style="font-size: 0.85rem; padding: 10px; margin: 0; font-weight: bold;">🎲 הגרל תלמיד לענות</button>
@@ -709,6 +714,15 @@
                     <textarea id="personal-notes" placeholder="רשום לעצמך הערות לשיעור כאן..." style="width: 100%; height: 90px; resize: none; font-size: 0.85rem; margin: 0; padding: 8px;" oninput="savePersonalNotes()"></textarea>
                 </div>
 
+                <!-- מסמך סיכום משותף חדש -->
+                <div class="panel-box">
+                    <h3>
+                        <span>📑 סיכום שיתופי</span>
+                        <button onclick="downloadSharedDoc()" style="font-size: 0.7rem; padding: 4px 8px; margin: 0; background: var(--success);">הורד</button>
+                    </h3>
+                    <textarea id="shared-doc-area" placeholder="כתיבה משותפת בזמן אמת..." style="width: 100%; height: 90px; resize: none; font-size: 0.85rem; margin: 0; padding: 8px;" oninput="syncSharedDoc()"></textarea>
+                </div>
+
                 <!-- חדר המתנה למורה -->
                 <div class="panel-box" id="waiting-panel" style="display: none;">
                     <h3>⏳ ממתינים בכניסה (<span id="waiting-count">0</span>)</h3>
@@ -730,9 +744,12 @@
                     <div id="poll-content" style="font-size: 0.85rem;"></div>
                 </div>
 
-                <!-- צ'אט -->
+                <!-- צ'אט עם כפתור ניקוי -->
                 <div class="panel-box" style="display: flex; flex-direction: column;">
-                    <h3>💬 צ'אט כיתתי</h3>
+                    <h3>
+                        <span>💬 צ'אט כיתתי</span>
+                        <button onclick="clearChatHistory()" class="btn-danger" style="font-size: 0.65rem; padding: 3px 6px; margin: 0;">נקה</button>
+                    </h3>
                     <div class="chat-messages" id="chat-messages"></div>
                     <div class="chat-input-row">
                         <input type="text" id="chat-input" placeholder="כתוב הודעה..." onkeypress="handleChatKey(event)">
@@ -762,16 +779,19 @@
         let timerInterval = null;
         let timeLeft = 0;
 
+        // משתני שעון עצר (Stopwatch) חדש
+        let stopwatchInterval = null;
+        let stopwatchSeconds = 0;
+        let isStopwatchRunning = false;
+
         let pdfDoc = null;
         let pageNum = 1;
         let pageRendering = false;
         let pageNumPending = null;
 
-        // משתני Three.js לתלת מימד
         let scene, camera, renderer, currentMesh;
         let is3DInitialized = false;
 
-        // משתני Chart.js לגרפים מתקדמים
         let mathChartInstance = null;
         let isGraphInitialized = false;
         let lastExportData = null;
@@ -796,11 +816,7 @@
 
         function toggleTheme() {
             const body = document.body;
-            if (body.getAttribute("data-theme") === "dark") {
-                body.setAttribute("data-theme", "light");
-            } else {
-                body.setAttribute("data-theme", "dark");
-            }
+            body.getAttribute("data-theme") === "dark" ? body.setAttribute("data-theme", "light") : body.setAttribute("data-theme", "dark");
         }
 
         function startApp() {
@@ -846,11 +862,7 @@
                     let average = sum / dataArray.length;
                     const box = document.getElementById(boxId);
                     if (box) {
-                        if (average > 12) {
-                            box.classList.add('speaking');
-                        } else {
-                            box.classList.remove('speaking');
-                        }
+                        average > 12 ? box.classList.add('speaking') : box.classList.remove('speaking');
                     }
                     requestAnimationFrame(checkAudio);
                 }
@@ -858,14 +870,73 @@
             } catch (e) {}
         }
 
+        // --- לוגיקת שעון עצר (Stopwatch) חדש ---
+        function toggleStopwatch() {
+            const btn = document.getElementById('sw-toggle-btn');
+            if (!isStopwatchRunning) {
+                isStopwatchRunning = true;
+                btn.innerText = "השהה";
+                btn.style.background = "var(--danger)";
+                stopwatchInterval = setInterval(() => {
+                    stopwatchSeconds++;
+                    updateStopwatchDisplay();
+                }, 1000);
+            } else {
+                isStopwatchRunning = false;
+                btn.innerText = "הפעל";
+                btn.style.background = "var(--success)";
+                clearInterval(stopwatchInterval);
+            }
+        }
+
+        function resetStopwatch() {
+            isStopwatchRunning = false;
+            clearInterval(stopwatchInterval);
+            stopwatchSeconds = 0;
+            updateStopwatchDisplay();
+            const btn = document.getElementById('sw-toggle-btn');
+            btn.innerText = "הפעל";
+            btn.style.background = "var(--success)";
+        }
+
+        function updateStopwatchDisplay() {
+            let hrs = Math.floor(stopwatchSeconds / 3600);
+            let mins = Math.floor((stopwatchSeconds % 3600) / 60);
+            let secs = stopwatchSeconds % 60;
+            document.getElementById('stopwatch-display').innerText = 
+                `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // --- לוגיקת מסמך שיתופי חדש ---
+        function syncSharedDoc() {
+            const text = document.getElementById('shared-doc-area').value;
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'shared-doc', text: text });
+            }
+        }
+
+        function downloadSharedDoc() {
+            const text = document.getElementById('shared-doc-area').value;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'shared_notes.txt'; a.click();
+            showToast("📥 המסמך השיתופי הורד!");
+        }
+
+        function clearChatHistory() {
+            if (confirm("האם לנקות את היסטוריית הצ'אט?")) {
+                localStorage.removeItem('chat_history');
+                renderChatHistory();
+                showToast("🗑️ הצ'אט נוקה");
+            }
+        }
+
         // --- ניהול מחולל גרפים מתקדם ---
         function toggleGraphSpace() {
             const container = document.getElementById('graph-container');
             const isVisible = container.style.display === 'block';
             container.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible && !isGraphInitialized) {
-                plotCustomGraph();
-            }
+            if (!isVisible && !isGraphInitialized) plotCustomGraph();
         }
 
         function plotCustomGraph() {
@@ -905,9 +976,7 @@
                     try {
                         y = compiledFunc(x);
                         if (isNaN(y) || !isFinite(y)) y = null;
-                    } catch (err) {
-                        y = null;
-                    }
+                    } catch (err) { y = null; }
                     yValues.push(y);
                 });
 
@@ -925,37 +994,17 @@
                 });
 
                 if (analysisMode && index === 0) {
-                    let roots = [];
-                    let peaks = [];
-                    let valleys = [];
-
+                    let roots = [], peaks = [], valleys = [];
                     for (let i = 1; i < yValues.length - 1; i++) {
-                        let prev = yValues[i-1];
-                        let curr = yValues[i];
-                        let next = yValues[i+1];
-
+                        let prev = yValues[i-1], curr = yValues[i], next = yValues[i+1];
                         if (prev === null || curr === null || next === null) continue;
-
-                        if (prev * curr < 0 || curr === 0) {
-                            roots.push({ x: labels[i], y: 0 });
-                        }
-                        if (curr > prev && curr > next) {
-                            peaks.push({ x: labels[i], y: curr });
-                        }
-                        if (curr < prev && curr < next) {
-                            valleys.push({ x: labels[i], y: curr });
-                        }
+                        if (prev * curr < 0 || curr === 0) roots.push({ x: labels[i], y: 0 });
+                        if (curr > prev && curr > next) peaks.push({ x: labels[i], y: curr });
+                        if (curr < prev && curr < next) valleys.push({ x: labels[i], y: curr });
                     }
-
-                    if (roots.length > 0) {
-                        datasets.push({ label: 'שורשים (חיתוך ציר X)', data: roots, backgroundColor: '#f43f5e', borderColor: '#f43f5e', pointRadius: 5, pointStyle: 'circle', type: 'scatter' });
-                    }
-                    if (peaks.length > 0) {
-                        datasets.push({ label: 'מקסימום מקומי', data: peaks, backgroundColor: '#10b981', borderColor: '#10b981', pointRadius: 6, pointStyle: 'triangle', type: 'scatter' });
-                    }
-                    if (valleys.length > 0) {
-                        datasets.push({ label: 'מינימום מקומי', data: valleys, backgroundColor: '#c084fc', borderColor: '#c084fc', pointRadius: 6, pointStyle: 'rectRot', type: 'scatter' });
-                    }
+                    if (roots.length > 0) datasets.push({ label: 'שורשים', data: roots, backgroundColor: '#f43f5e', borderColor: '#f43f5e', pointRadius: 5, type: 'scatter' });
+                    if (peaks.length > 0) datasets.push({ label: 'מקסימום', data: peaks, backgroundColor: '#10b981', borderColor: '#10b981', pointRadius: 6, pointStyle: 'triangle', type: 'scatter' });
+                    if (valleys.length > 0) datasets.push({ label: 'מינימום', data: valleys, backgroundColor: '#c084fc', borderColor: '#c084fc', pointRadius: 6, pointStyle: 'rectRot', type: 'scatter' });
                 }
             });
 
@@ -975,23 +1024,7 @@
                         x: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#94a3b8', maxTicksLimit: 15 } },
                         y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#94a3b8' } }
                     },
-                    plugins: { 
-                        legend: { 
-                            display: true,
-                            position: 'top',
-                            align: 'start',
-                            labels: { 
-                                color: '#f8fafc',
-                                boxWidth: 16,
-                                boxHeight: 16,
-                                padding: 15,
-                                font: {
-                                    size: 12,
-                                    family: 'system-ui'
-                                }
-                            } 
-                        } 
-                    },
+                    plugins: { legend: { display: true, position: 'top', labels: { color: '#f8fafc', font: { size: 12 } } } },
                     animation: false
                 }
             });
@@ -1000,35 +1033,25 @@
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'math-graph', expr: rawExprs, xMin: xMin, xMax: xMax, analysis: analysisMode });
             }
-            showToast("📈 מחולל הגרפים עודכן וסונכרן בהצלחה!");
+            showToast("📈 מחולל הגרפים עודכן!");
         }
 
         function exportCSV() {
-            if (!lastExportData) {
-                alert("אין נתונים לייצוא. נא לשרטט גרף תחילה.");
-                return;
-            }
-
+            if (!lastExportData) { alert("אין נתונים לייצוא."); return; }
             const keys = Object.keys(lastExportData);
             let csvContent = "data:text/csv;charset=utf-8," + keys.join(",") + "\n";
-            
             const rowCount = lastExportData.x.length;
             for (let i = 0; i < rowCount; i++) {
-                let row = keys.map(key => {
-                    let val = lastExportData[key][i];
-                    return (val !== null && val !== undefined) ? val : "";
-                });
+                let row = keys.map(key => lastExportData[key][i] ?? "");
                 csvContent += row.join(",") + "\n";
             }
-
-            const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            link.setAttribute("href", encodeURI(csvContent));
             link.setAttribute("download", "math_full_analysis_data.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("📥 טבלת הנתונים הורדה כקובץ CSV!");
+            showToast("📥 קובץ CSV הורד!");
         }
 
         function updateGraphDataRemote(expr, xMin, xMax, analysisMode) {
@@ -1045,9 +1068,7 @@
             const container = document.getElementById('threed-container');
             const isVisible = container.style.display === 'block';
             container.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible && !is3DInitialized) {
-                init3DScene();
-            }
+            if (!isVisible && !is3DInitialized) init3DScene();
         }
 
         function init3DScene() {
@@ -1060,9 +1081,7 @@
             renderer.setSize(box.clientWidth, box.clientHeight);
             box.appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
-
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
             const pointLight = new THREE.PointLight(0xffffff, 1);
             pointLight.position.set(5, 5, 5);
             scene.add(pointLight);
@@ -1072,10 +1091,7 @@
 
             function animate() {
                 requestAnimationFrame(animate);
-                if (currentMesh) {
-                    currentMesh.rotation.x += 0.01;
-                    currentMesh.rotation.y += 0.015;
-                }
+                if (currentMesh) { currentMesh.rotation.x += 0.01; currentMesh.rotation.y += 0.015; }
                 renderer.render(scene, camera);
             }
             animate();
@@ -1083,12 +1099,10 @@
 
         function createMeshShape(type) {
             if (currentMesh) scene.remove(currentMesh);
-            let geometry;
-            if (type === 'cube') geometry = new THREE.BoxGeometry(2, 2, 2);
-            else if (type === 'sphere') geometry = new THREE.SphereGeometry(1.4, 32, 32);
-            else if (type === 'torus') geometry = new THREE.TorusGeometry(1.2, 0.4, 16, 100);
-            else if (type === 'pyramid') geometry = new THREE.ConeGeometry(1.5, 2.5, 4);
-            else geometry = new THREE.BoxGeometry(2, 2, 2);
+            let geometry = type === 'cube' ? new THREE.BoxGeometry(2, 2, 2) :
+                           type === 'sphere' ? new THREE.SphereGeometry(1.4, 32, 32) :
+                           type === 'torus' ? new THREE.TorusGeometry(1.2, 0.4, 16, 100) :
+                           new THREE.ConeGeometry(1.5, 2.5, 4);
 
             const material = new THREE.MeshStandardMaterial({ color: 0x6366f1, roughness: 0.3, metalness: 0.5 });
             currentMesh = new THREE.Mesh(geometry, material);
@@ -1097,18 +1111,14 @@
 
         function change3DShape(type) {
             createMeshShape(type);
-            for (let peerId in connections) {
-                connections[peerId].send({ type: '3d-shape', shape: type });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: '3d-shape', shape: type });
             showToast("🌌 אובייקט תלת-מימדי שונה!");
         }
 
         function sendReaction(emoji, event) {
             event.stopPropagation();
             displayFloatingReaction('local-video-box', emoji);
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'reaction', emoji: emoji });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: 'reaction', emoji: emoji });
         }
 
         function displayFloatingReaction(boxId, emoji) {
@@ -1122,30 +1132,21 @@
         }
 
         function savePersonalNotes() {
-            const notes = document.getElementById('personal-notes').value;
-            localStorage.setItem('class_personal_notes', notes);
+            localStorage.setItem('class_personal_notes', document.getElementById('personal-notes').value);
         }
 
         function loadPersonalNotes() {
-            const notes = localStorage.getItem('class_personal_notes') || '';
-            document.getElementById('personal-notes').value = notes;
+            document.getElementById('personal-notes').value = localStorage.getItem('class_personal_notes') || '';
         }
 
         function startTimer(seconds) {
             clearInterval(timerInterval);
             timeLeft = seconds;
             updateTimerDisplay();
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'timer-sync', time: timeLeft });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: 'timer-sync', time: timeLeft });
             timerInterval = setInterval(() => {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    updateTimerDisplay();
-                } else {
-                    clearInterval(timerInterval);
-                    showToast("⏰ נגמר הזמן בטיימר!");
-                }
+                if (timeLeft > 0) { timeLeft--; updateTimerDisplay(); } 
+                else { clearInterval(timerInterval); showToast("⏰ נגמר הזמן בטיימר!"); }
             }, 1000);
         }
 
@@ -1153,9 +1154,7 @@
             clearInterval(timerInterval);
             timeLeft = 0;
             updateTimerDisplay();
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'timer-sync', time: 0 });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: 'timer-sync', time: 0 });
         }
 
         function updateTimerDisplay() {
@@ -1185,28 +1184,20 @@
             recognition.interimResults = true;
 
             recognition.onresult = (event) => {
-                let interimText = '';
-                let finalText = '';
+                let interimText = '', finalText = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalText += event.results[i][0].transcript + ' ';
-                    } else {
-                        interimText += event.results[i][0].transcript;
-                    }
+                    if (event.results[i].isFinal) finalText += event.results[i][0].transcript + ' ';
+                    else interimText += event.results[i][0].transcript;
                 }
                 if (finalText) {
                     fullTranscriptText += `${myName}: ${finalText}\n`;
-                    for (let peerId in connections) {
-                        connections[peerId].send({ type: 'transcript', text: `${myName}: ${finalText}` });
-                    }
+                    for (let peerId in connections) connections[peerId].send({ type: 'transcript', text: `${myName}: ${finalText}` });
                 }
                 updateTranscriptBox(fullTranscriptText + interimText);
                 showLiveSubtitle(interimText || finalText);
             };
 
-            recognition.onend = () => {
-                if (isTranscribing) { try { recognition.start(); } catch (e) {} }
-            };
+            recognition.onend = () => { if (isTranscribing) { try { recognition.start(); } catch (e) {} } };
         }
 
         function showLiveSubtitle(text) {
@@ -1233,36 +1224,30 @@
         }
 
         function downloadTranscript() {
-            if (!fullTranscriptText.trim()) { alert("אין טקסט שמור להורדה"); return; }
+            if (!fullTranscriptText.trim()) { alert("אין טקסט שמור"); return; }
             const blob = new Blob([fullTranscriptText], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'transcript.txt'; a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'transcript.txt'; a.click();
             showToast("💾 סיכום השיעור הורד!");
         }
 
         function downloadTranscriptWord() {
-            if (!fullTranscriptText.trim()) { alert("אין טקסט שמור להורדה"); return; }
-            const htmlContent = `<html dir="rtl"><head><meta charset="UTF-8"><title>סיכום שיעור</title></head><body style="font-family:Arial;"><h2>סיכום שיעור וירטואלי</h2><p>${fullTranscriptText.replace(/\n/g, '<br>')}</p></body></html>`;
+            if (!fullTranscriptText.trim()) { alert("אין טקסט שמור"); return; }
+            const htmlContent = `<html dir="rtl"><head><meta charset="UTF-8"></head><body style="font-family:Arial;"><h2>סיכום שיעור וירטואלי</h2><p>${fullTranscriptText.replace(/\n/g, '<br>')}</p></body></html>`;
             const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'lesson-summary.doc'; a.click();
-            showToast("📄 סיכום הורד כקובץ Word!");
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'lesson-summary.doc'; a.click();
+            showToast("📄 סיכום הורד כ-Word!");
         }
 
         function getMediaStreamWithQuality(quality) {
             let constraints = { video: true, audio: true };
-            if (quality === 'sd') {
-                constraints.video = { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { max: 24 } };
-            }
+            if (quality === 'sd') constraints.video = { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { max: 24 } };
             return navigator.mediaDevices.getUserMedia(constraints);
         }
 
         function initPeerServer(roomId = null) {
             peer = new Peer(roomId);
 
-            peer.on('open', (id) => {
-                document.getElementById('room-info').innerHTML = `קוד החדר שלך: <b>${id}</b>`;
-            });
+            peer.on('open', (id) => { document.getElementById('room-info').innerHTML = `קוד החדר שלך: <b>${id}</b>`; });
 
             peer.on('connection', (conn) => {
                 conn.on('data', (data) => {
@@ -1270,19 +1255,8 @@
                         waitingQueue[conn.peer] = { name: data.name, conn: conn };
                         updateWaitingUI();
                         showToast(`⏳ ${data.name} ממתין בכניסה`);
-                    } else if (data.type === 'reaction') {
-                        displayFloatingReaction('video-' + conn.peer, data.emoji);
-                    } else if (data.type === 'transcript') {
-                        fullTranscriptText += `${data.text}\n`;
-                        updateTranscriptBox(fullTranscriptText);
-                    } else if (data.type === 'timer-sync') {
-                        timeLeft = data.time;
-                        updateTimerDisplay();
-                    } else if (data.type === 'user-info') {
-                        if (participantsData[conn.peer]) {
-                            participantsData[conn.peer].name = data.name;
-                            updateParticipantsUI();
-                        }
+                    } else if (data.type === 'shared-doc') {
+                        document.getElementById('shared-doc-area').value = data.text;
                     } else {
                         handleIncomingData(conn, data);
                     }
@@ -1322,7 +1296,7 @@
                 if (data.type === 'admitted') {
                     document.getElementById('waiting-room-screen').style.display = 'none';
                     document.getElementById('main-layout').style.display = 'grid';
-                    showToast("✅ אושרה כניסתך לשיעור!");
+                    showToast("✅ אושרה כניסתך!");
 
                     const call = peer.call(targetId, myStream, { metadata: { name: myName } });
                     call.on('stream', (remoteStream) => {
@@ -1343,11 +1317,10 @@
         function updateWaitingUI() {
             const panel = document.getElementById('waiting-panel');
             const listEl = document.getElementById('waiting-list');
-            const countEl = document.getElementById('waiting-count');
             let keys = Object.keys(waitingQueue);
             if (keys.length > 0) {
                 panel.style.display = 'block';
-                countEl.innerText = keys.length;
+                document.getElementById('waiting-count').innerText = keys.length;
                 let html = "";
                 keys.forEach(id => {
                     let w = waitingQueue[id];
@@ -1355,9 +1328,7 @@
                     html += `<li><span style="color:${waitingColor}; font-weight:700;">${w.name}</span> <span style="display:flex; gap:6px;"><button onclick="admitUser('${id}')" class="btn-success" style="font-size:0.75rem; padding:4px 10px; margin:0;">אשר</button><button onclick="rejectUser('${id}')" class="btn-danger" style="font-size:0.75rem; padding:4px 10px; margin:0;">דחה</button></span></li>`;
                 });
                 listEl.innerHTML = html;
-            } else {
-                panel.style.display = 'none';
-            }
+            } else { panel.style.display = 'none'; }
         }
 
         function admitUser(peerId) {
@@ -1388,92 +1359,53 @@
         }
 
         function handleIncomingData(conn, data) {
-            if (data.type === 'chat') {
-                saveAndAppendMessage(data.name, data.text);
-            } else if (data.type === 'reaction') {
-                displayFloatingReaction('video-' + conn.peer, data.emoji);
-            } else if (data.type === 'transcript') {
-                fullTranscriptText += `${data.text}\n`;
-                updateTranscriptBox(fullTranscriptText);
-            } else if (data.type === 'timer-sync') {
-                timeLeft = data.time;
-                updateTimerDisplay();
-            } else if (data.type === 'hand-raise') {
-                if (participantsData[conn.peer]) {
-                    participantsData[conn.peer].hand = data.raised;
-                    updateParticipantsUI();
-                }
-            } else if (data.type === 'user-info') {
-                if (participantsData[conn.peer]) {
-                    participantsData[conn.peer].name = data.name;
-                    updateParticipantsUI();
-                }
-            } else if (data.type === 'new-poll') {
-                currentPoll = data.poll;
-                renderPoll();
-            } else if (data.type === 'poll-vote') {
-                if (currentPoll) { currentPoll.votes[data.optionIndex]++; renderPoll(); }
-            } else if (data.type === 'draw') {
-                drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false);
-            } else if (data.type === 'pdf-page') {
-                renderRemotePdfPage(data.pageNum, data.pdfData);
-            } else if (data.type === '3d-shape') {
-                document.getElementById('threed-container').style.display = 'block';
-                if (!is3DInitialized) init3DScene();
-                createMeshShape(data.shape);
-            } else if (data.type === 'math-graph') {
-                updateGraphDataRemote(data.expr, data.xMin, data.xMax, data.analysis);
-            }
+            if (data.type === 'chat') saveAndAppendMessage(data.name, data.text);
+            else if (data.type === 'reaction') displayFloatingReaction('video-' + conn.peer, data.emoji);
+            else if (data.type === 'transcript') { fullTranscriptText += `${data.text}\n`; updateTranscriptBox(fullTranscriptText); }
+            else if (data.type === 'timer-sync') { timeLeft = data.time; updateTimerDisplay(); }
+            else if (data.type === 'hand-raise') { if (participantsData[conn.peer]) { participantsData[conn.peer].hand = data.raised; updateParticipantsUI(); } }
+            else if (data.type === 'user-info') { if (participantsData[conn.peer]) { participantsData[conn.peer].name = data.name; updateParticipantsUI(); } }
+            else if (data.type === 'new-poll') { currentPoll = data.poll; renderPoll(); }
+            else if (data.type === 'poll-vote') { if (currentPoll) { currentPoll.votes[data.optionIndex]++; renderPoll(); } }
+            else if (data.type === 'draw') drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false);
+            else if (data.type === 'pdf-page') renderRemotePdfPage(data.pageNum, data.pdfData);
+            else if (data.type === '3d-shape') { document.getElementById('threed-container').style.display = 'block'; if (!is3DInitialized) init3DScene(); createMeshShape(data.shape); }
+            else if (data.type === 'math-graph') updateGraphDataRemote(data.expr, data.xMin, data.xMax, data.analysis);
+            else if (data.type === 'shared-doc') document.getElementById('shared-doc-area').value = data.text;
         }
 
         function addVideoStream(peerId, stream, name, color) {
             if (document.getElementById('video-' + peerId)) return;
-
             const box = document.createElement('div');
             box.className = 'video-box';
             box.id = 'video-' + peerId;
             box.onclick = () => toggleSpotlight(box);
 
             const video = document.createElement('video');
-            video.srcObject = stream;
-            video.autoplay = true;
-            video.playsInline = true;
+            video.srcObject = stream; video.autoplay = true; video.playsInline = true;
 
             const placeholder = document.createElement('div');
-            placeholder.className = 'audio-only-placeholder';
-            placeholder.innerHTML = '🎙️';
+            placeholder.className = 'audio-only-placeholder'; placeholder.innerHTML = '🎙️';
 
             const reactionsBar = document.createElement('div');
             reactionsBar.className = 'reactions-bar';
-            reactionsBar.innerHTML = `
-                <button class="reaction-btn" onclick="sendReaction('❤️', event)">❤️</button>
-                <button class="reaction-btn" onclick="sendReaction('👍', event)">👍</button>
-                <button class="reaction-btn" onclick="sendReaction('😂', event)">😂</button>
-                <button class="reaction-btn" onclick="sendReaction('👏', event)">👏</button>
-            `;
+            reactionsBar.innerHTML = `<button class="reaction-btn" onclick="sendReaction('❤️', event)">❤️</button><button class="reaction-btn" onclick="sendReaction('👍', event)">👍</button><button class="reaction-btn" onclick="sendReaction('😂', event)">😂</button><button class="reaction-btn" onclick="sendReaction('👏', event)">👏</button>`;
 
             const label = document.createElement('div');
-            label.className = 'video-label';
-            label.style.borderColor = color;
+            label.className = 'video-label'; label.style.borderColor = color;
             label.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:var(--success);"></span><span style="color:${color};">${name}</span>`;
 
-            box.appendChild(video);
-            box.appendChild(placeholder);
-            box.appendChild(reactionsBar);
-            box.appendChild(label);
+            box.appendChild(video); box.appendChild(placeholder); box.appendChild(reactionsBar); box.appendChild(label);
             videoGrid.appendChild(box);
         }
 
         function updateParticipantsUI() {
             const listEl = document.getElementById('participants-list');
-            let html = "";
-            let count = 0;
+            let html = "", count = 0;
             for (let id in participantsData) {
                 count++;
                 let p = participantsData[id];
-                let micIcon = p.mic ? "🎤" : "🔇";
-                let camIcon = p.cam ? "📹" : "📷❌";
-                let handIcon = p.hand ? " ✋" : "";
+                let micIcon = p.mic ? "🎤" : "🔇", camIcon = p.cam ? "📹" : "📷❌", handIcon = p.hand ? " ✋" : "";
                 html += `<li><span style="color:${p.color}; font-weight:700;">${p.name}${handIcon}</span> <span style="display:flex; gap:6px;">${micIcon} ${camIcon}</span></li>`;
             }
             listEl.innerHTML = html;
@@ -1488,20 +1420,16 @@
         function openPollModal() {
             const question = prompt("שאלת הסקר:");
             if (!question) return;
-            const opt1 = prompt("תשובה 1:");
-            const opt2 = prompt("תשובה 2:");
+            const opt1 = prompt("תשובה 1:"), opt2 = prompt("תשובה 2:");
             if (!opt1 || !opt2) return;
             currentPoll = { question, options: [opt1, opt2], votes: [0, 0] };
             renderPoll();
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'new-poll', poll: currentPoll });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: 'new-poll', poll: currentPoll });
             showToast("📊 סקר נשלח!");
         }
 
         function renderPoll() {
-            const area = document.getElementById('poll-area');
-            const content = document.getElementById('poll-content');
+            const area = document.getElementById('poll-area'), content = document.getElementById('poll-content');
             area.style.display = 'block';
             let totalVotes = currentPoll.votes.reduce((a, b) => a + b, 0);
             let html = `<p style="margin: 0 0 10px; font-weight: bold; color: var(--text-main);">${currentPoll.question}</p>`;
@@ -1516,9 +1444,7 @@
         function votePoll(index) {
             currentPoll.votes[index]++;
             renderPoll();
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'poll-vote', optionIndex: index });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: 'poll-vote', optionIndex: index });
         }
 
         function toggleSpotlight(boxElement) {
@@ -1534,23 +1460,18 @@
             btn.className = p.hand ? "btn-success" : "btn-warning";
             btn.innerText = p.hand ? "✋ הורד יד" : "✋ הרם יד";
             updateParticipantsUI();
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'hand-raise', raised: p.hand });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: 'hand-raise', raised: p.hand });
         }
 
         function muteEveryone() {
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'mute-all' });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: 'mute-all' });
             showToast("🔇 נשלחה פקודת השתקה לכולם");
         }
 
         function toggleMic() {
             const audioTrack = myStream.getAudioTracks()[0];
             audioTrack.enabled = !audioTrack.enabled;
-            const btn = document.getElementById('mic-btn');
-            btn.innerText = audioTrack.enabled ? "🎤 השתק" : "🎤 הפעל";
+            document.getElementById('mic-btn').innerText = audioTrack.enabled ? "🎤 השתק" : "🎤 הפעל";
             participantsData['local'].mic = audioTrack.enabled;
             updateParticipantsUI();
         }
@@ -1558,23 +1479,16 @@
         function toggleCamera() {
             const videoTrack = myStream.getVideoTracks()[0];
             videoTrack.enabled = !videoTrack.enabled;
-            const btn = document.getElementById('cam-btn');
-            btn.innerText = videoTrack.enabled ? "📹 מצלמה" : "📹 כבוי";
+            document.getElementById('cam-btn').innerText = videoTrack.enabled ? "📹 מצלמה" : "📹 כבוי";
             participantsData['local'].cam = videoTrack.enabled;
             updateParticipantsUI();
         }
 
         const whiteboardContainer = document.getElementById('whiteboard-container');
-        const canvas = document.getElementById('whiteboard');
-        const ctx = canvas.getContext('2d');
-        let drawing = false;
-        let lastX = 0, lastY = 0;
-        let currentPdfDataUrl = null;
+        const canvas = document.getElementById('whiteboard'), ctx = canvas.getContext('2d');
+        let drawing = false, lastX = 0, lastY = 0, currentPdfDataUrl = null;
 
-        function toggleWhiteboard() {
-            whiteboardContainer.style.display = whiteboardContainer.style.display === 'none' ? 'block' : 'none';
-        }
-
+        function toggleWhiteboard() { whiteboardContainer.style.display = whiteboardContainer.style.display === 'none' ? 'block' : 'none'; }
         function setEraser() { document.getElementById('wb-color').value = '#ffffff'; }
 
         function loadPDF(e) {
@@ -1583,8 +1497,7 @@
             const reader = new FileReader();
             reader.onload = function(event) {
                 currentPdfDataUrl = event.target.result;
-                const typedarray = new Uint8Array(event.target.result);
-                pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                pdfjsLib.getDocument(new Uint8Array(event.target.result)).promise.then(pdf => {
                     pdfDoc = pdf;
                     document.getElementById('pdf-page-count').innerText = pdf.numPages;
                     pageNum = 1;
@@ -1600,10 +1513,8 @@
             pageRendering = true;
             pdfDoc.getPage(num).then(page => {
                 const viewport = page.getViewport({ scale: 1.15 });
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                const renderContext = { canvasContext: ctx, viewport: viewport };
-                page.render(renderContext).promise.then(() => {
+                canvas.height = viewport.height; canvas.width = viewport.width;
+                page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
                     pageRendering = false;
                     if (pageNumPending !== null) { renderPage(pageNumPending); pageNumPending = null; }
                 });
@@ -1611,31 +1522,17 @@
             });
         }
 
-        function prevPdfPage() {
-            if (pageNum <= 1) return;
-            pageNum--;
-            renderPage(pageNum);
-            broadcastPdfPage(pageNum, currentPdfDataUrl);
-        }
-
-        function nextPdfPage() {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            renderPage(pageNum);
-            broadcastPdfPage(pageNum, currentPdfDataUrl);
-        }
+        function prevPdfPage() { if (pageNum <= 1) return; pageNum--; renderPage(pageNum); broadcastPdfPage(pageNum, currentPdfDataUrl); }
+        function nextPdfPage() { if (pageNum >= pdfDoc.numPages) return; pageNum++; renderPage(pageNum); broadcastPdfPage(pageNum, currentPdfDataUrl); }
 
         function broadcastPdfPage(pNum, pdfData) {
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'pdf-page', pageNum: pNum, pdfData: pdfData });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: 'pdf-page', pageNum: pNum, pdfData: pdfData });
         }
 
         function renderRemotePdfPage(pNum, pdfData) {
             document.getElementById('pdf-controls').style.display = 'block';
             whiteboardContainer.style.display = 'block';
-            const typedarray = new Uint8Array(pdfData);
-            pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+            pdfjsLib.getDocument(new Uint8Array(pdfData)).promise.then(pdf => {
                 pdfDoc = pdf;
                 document.getElementById('pdf-page-count').innerText = pdf.numPages;
                 pageNum = pNum;
@@ -1646,26 +1543,16 @@
         canvas.addEventListener('mousedown', (e) => { drawing = true; [lastX, lastY] = [e.offsetX, e.offsetY]; });
         canvas.addEventListener('mousemove', (e) => {
             if (!drawing) return;
-            const color = document.getElementById('wb-color').value;
-            const size = document.getElementById('wb-size').value;
-            drawLineOnCanvas(lastX, lastY, e.offsetX, e.offsetY, color, size, true);
+            drawLineOnCanvas(lastX, lastY, e.offsetX, e.offsetY, document.getElementById('wb-color').value, document.getElementById('wb-size').value, true);
             [lastX, lastY] = [e.offsetX, e.offsetY];
         });
         window.addEventListener('mouseup', () => drawing = false);
 
         function drawLineOnCanvas(x0, y0, x1, y1, color, size, broadcast) {
-            ctx.beginPath();
-            ctx.moveTo(x0, y0);
-            ctx.lineTo(x1, y1);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = size;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-            ctx.closePath();
+            ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+            ctx.strokeStyle = color; ctx.lineWidth = size; ctx.lineCap = 'round'; ctx.stroke(); ctx.closePath();
             if (broadcast) {
-                for (let peerId in connections) {
-                    connections[peerId].send({ type: 'draw', x0, y0, x1, y1, color, size });
-                }
+                for (let peerId in connections) connections[peerId].send({ type: 'draw', x0, y0, x1, y1, color, size });
             }
         }
 
@@ -1691,9 +1578,7 @@
             const text = input.value.trim();
             if (!text) return;
             saveAndAppendMessage("אני", text);
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'chat', name: myName, text: text });
-            }
+            for (let peerId in connections) connections[peerId].send({ type: 'chat', name: myName, text: text });
             input.value = '';
         }
 
@@ -1708,18 +1593,15 @@
                     mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.data = e.data; };
                     mediaRecorder.onstop = () => {
                         const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a'); a.href = url; a.download = 'class-recording.webm'; a.click();
+                        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'class-recording.webm'; a.click();
                         showToast("💾 ההקלטה נשמרה");
                     };
                     mediaRecorder.start();
-                    btn.innerText = "⏹️ עצור";
-                    btn.className = "btn-danger";
+                    btn.innerText = "⏹️ עצור"; btn.className = "btn-danger";
                 });
             } else {
                 mediaRecorder.stop();
-                btn.innerText = "⏺️ הקלט";
-                btn.className = "btn-success";
+                btn.innerText = "⏺️ הקלט"; btn.className = "btn-success";
             }
         }
 
@@ -1748,7 +1630,7 @@
             toast.className = 'toast';
             toast.innerHTML = `🔔 ${message}`;
             container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 4000);
+            setTimeout(() => toast.remove(), 4000);
         }
     </script>
 </body>
