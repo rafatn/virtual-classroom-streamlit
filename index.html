@@ -460,6 +460,57 @@
             position: relative;
         }
 
+        /* עיצוב המחשבון ההנדסי החדש */
+        #calculator-container {
+            display: none;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-float);
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .calc-display {
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            font-size: 1.4rem;
+            text-align: left;
+            direction: ltr;
+            margin-bottom: 15px;
+            color: var(--success);
+            font-weight: bold;
+            min-height: 60px;
+            word-break: break-all;
+        }
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .calc-btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            box-shadow: none;
+            margin: 0;
+        }
+        .calc-btn:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .calc-btn.op { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+        .calc-btn.danger { background: rgba(244, 63, 94, 0.15); color: var(--danger); }
+        .calc-btn.equals { background: var(--success); color: #fff; grid-column: span 2; }
+
         .sidebar-panels {
             display: flex;
             flex-direction: column;
@@ -629,7 +680,50 @@
                     <button onclick="toggleWhiteboard()" style="color: #f43f5e;">🎨 לוח ו-PDF</button>
                     <button onclick="toggle3DSpace()" style="color: #38bdf8;">🌌 מרחב 3D</button>
                     <button onclick="toggleGraphSpace()" style="color: #f59e0b;">📈 מחולל גרפים</button>
+                    <button onclick="toggleCalculator()" style="color: #38bdf8;">🧮 מחשבון הנדסי</button>
                     <button id="record-btn" class="btn-success" onclick="toggleRecording()">⏺️ הקלט</button>
+                </div>
+
+                <!-- מחשבון הנדסי -->
+                <div id="calculator-container">
+                    <h3 style="margin-top: 0; color: #38bdf8; font-size: 1rem; text-align: right;">🧮 מחשבון הנדסי מתקדם</h3>
+                    <div class="calc-display" id="calc-screen">0</div>
+                    <div class="calc-grid">
+                        <button class="calc-btn danger" onclick="calcClear()">AC</button>
+                        <button class="calc-btn op" onclick="calcAppend('(')">(</button>
+                        <button class="calc-btn op" onclick="calcAppend(')')">)</button>
+                        <button class="calc-btn op" onclick="calcAppend('/')">÷</button>
+                        
+                        <button class="calc-btn op" onclick="calcAppend('Math.sin(')">sin</button>
+                        <button class="calc-btn op" onclick="calcAppend('Math.cos(')">cos</button>
+                        <button class="calc-btn op" onclick="calcAppend('Math.tan(')">tan</button>
+                        <button class="calc-btn op" onclick="calcAppend('*')">×</button>
+                        
+                        <button class="calc-btn op" onclick="calcAppend('Math.log10(')">log</button>
+                        <button class="calc-btn op" onclick="calcAppend('Math.log(')">ln</button>
+                        <button class="calc-btn op" onclick="calcAppend('Math.sqrt(')">√</button>
+                        <button class="calc-btn op" onclick="calcAppend('**')">^</button>
+                        
+                        <button class="calc-btn" onclick="calcAppend('7')">7</button>
+                        <button class="calc-btn" onclick="calcAppend('8')">8</button>
+                        <button class="calc-btn" onclick="calcAppend('9')">9</button>
+                        <button class="calc-btn op" onclick="calcAppend('-')">-</button>
+                        
+                        <button class="calc-btn" onclick="calcAppend('4')">4</button>
+                        <button class="calc-btn" onclick="calcAppend('5')">5</button>
+                        <button class="calc-btn" onclick="calcAppend('6')">6</button>
+                        <button class="calc-btn op" onclick="calcAppend('+')">+</button>
+                        
+                        <button class="calc-btn" onclick="calcAppend('1')">1</button>
+                        <button class="calc-btn" onclick="calcAppend('2')">2</button>
+                        <button class="calc-btn" onclick="calcAppend('3')">3</button>
+                        <button class="calc-btn op" onclick="calcAppend('Math.PI')">π</button>
+                        
+                        <button class="calc-btn" onclick="calcAppend('0')">0</button>
+                        <button class="calc-btn" onclick="calcAppend('.')">.</button>
+                        <button class="calc-btn op" onclick="calcAppend('Math.E')">e</button>
+                        <button class="calc-btn equals" onclick="calcEvaluate()">=</button>
+                    </div>
                 </div>
 
                 <!-- מפת לייב גיאוגרפית -->
@@ -939,6 +1033,42 @@
         function toggleTheme() {
             const body = document.body;
             body.getAttribute("data-theme") === "dark" ? body.setAttribute("data-theme", "light") : body.setAttribute("data-theme", "dark");
+        }
+
+        /* פונקציות מחשבון הנדסי */
+        function toggleCalculator() {
+            const container = document.getElementById('calculator-container');
+            container.style.display = container.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function calcClear() {
+            document.getElementById('calc-screen').innerText = '0';
+        }
+
+        function calcAppend(val) {
+            const screen = document.getElementById('calc-screen');
+            if (screen.innerText === '0' && val !== '.') {
+                screen.innerText = val;
+            } else {
+                screen.innerText += val;
+            }
+        }
+
+        function calcEvaluate() {
+            const screen = document.getElementById('calc-screen');
+            try {
+                let expr = screen.innerText
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/');
+                let result = eval(expr);
+                if (isNaN(result) || !isFinite(result)) {
+                    screen.innerText = 'שגיאה';
+                } else {
+                    screen.innerText = parseFloat(result.toFixed(6));
+                }
+            } catch (e) {
+                screen.innerText = 'שגיאה';
+            }
         }
 
         async function fetchExchangeRates() {
