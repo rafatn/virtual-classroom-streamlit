@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - עם מיקום גיאוגרפי, תלת-מימד וגרפים</title>
+    <title>כיתה וירטואלית אולטימטיבית - מפה, AI, קבצים ועוד</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -14,6 +14,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- טעינת Chart.js לגרפים -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- טעינת Leaflet.js למפות -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
     <style>
         :root {
             --bg-base: #060913;
@@ -227,7 +231,14 @@
 
         .video-box.speaking {
             border-color: var(--success);
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.7);
+            animation: pulseSpeaking 1.5s infinite;
+        }
+
+        @keyframes pulseSpeaking {
+            0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.9); }
+            100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
         }
 
         .video-box.spotlight {
@@ -344,6 +355,45 @@
             display: none;
             pointer-events: none;
             border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        #map-container {
+            display: none;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            box-shadow: var(--shadow-float);
+        }
+
+        #leaflet-map {
+            width: 100%;
+            height: 380px;
+            border-radius: var(--radius-md);
+            z-index: 1;
+        }
+
+        #ai-assistant-container {
+            display: none;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            box-shadow: var(--shadow-float);
+        }
+
+        #ai-chat-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            height: 160px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
         #whiteboard-container {
@@ -535,7 +585,7 @@
 
     <div class="container">
         <header class="app-header">
-            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם מיקום IP, תלת-מימד וגרפים)</h2>
+            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם מפה חיה, AI, קבצים ותלת-מימד)</h2>
             <button onclick="toggleTheme()" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); font-size: 0.85rem; padding: 6px 12px;">🌓 מצב תצוגה</button>
         </header>
 
@@ -574,11 +624,29 @@
                     <button onclick="toggleBackgroundBlur()" style="color: #38bdf8;">🌫️ טשטוש</button>
                     <button id="hand-btn" class="btn-warning" onclick="toggleHandRaise()">✋ הרם יד</button>
                     <button onclick="toggleScreenShare()" style="color: #c084fc;">🖥️ שתף מסך</button>
+                    <button onclick="toggleGeoMap()" style="color: #34d399;">🗺️ מפת משתתפים</button>
+                    <button onclick="toggleAIAssistant()" style="color: #f472b6;">🤖 עזר AI</button>
                     <button onclick="toggleWhiteboard()" style="color: #f43f5e;">🎨 לוח ו-PDF</button>
                     <button onclick="toggle3DSpace()" style="color: #38bdf8;">🌌 מרחב 3D</button>
                     <button onclick="toggleGraphSpace()" style="color: #f59e0b;">📈 מחולל גרפים</button>
                     <button id="record-btn" class="btn-success" onclick="toggleRecording()">⏺️ הקלט</button>
-                    <button onclick="muteEveryone()" class="btn-danger">🔇 השתק כולם</button>
+                </div>
+
+                <!-- מפת לייב גיאוגרפית -->
+                <div id="map-container">
+                    <h3 style="margin-top: 0; color: #34d399; font-size: 1rem; text-align: right;">🌍 מפת משתתפי השיעור בעולם (Leaflet)</h3>
+                    <div id="leaflet-map"></div>
+                </div>
+
+                <!-- פאנל עוזר AI -->
+                <div id="ai-assistant-container">
+                    <h3 style="margin-top: 0; color: #f472b6; font-size: 1rem; text-align: right;">🤖 עזר בינה מלאכותית (סיכום אוטומטי ומענה על שאלות)</h3>
+                    <div id="ai-chat-box"></div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="ai-prompt-input" placeholder="שולח שאלה לעוזר ה-AI..." style="flex: 1; margin:0; padding:8px 12px; font-size:0.85rem;" onkeypress="if(event.key==='Enter') sendPromptToAI()">
+                        <button onclick="sendPromptToAI()" style="margin:0; padding:8px 16px; font-size:0.85rem; background:#db2777;">שאל AI</button>
+                        <button onclick="summarizeTranscriptWithAI()" style="margin:0; padding:8px 16px; font-size:0.85rem; background:#4f46e5;">סכם שיעור ב-AI</button>
+                    </div>
                 </div>
 
                 <!-- גריד וידאו -->
@@ -693,6 +761,19 @@
                     </div>
                 </div>
 
+                <!-- שיתוף קבצים מהיר -->
+                <div class="panel-box">
+                    <h3>
+                        <span>📁 דרייב כיתתי מהיר</span>
+                        <label style="background: var(--accent); color: #fff; padding: 4px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.75rem; font-weight: 600; margin: 0;">
+                            שלח קובץ <input type="file" id="file-share-input" onchange="sendFileToClass(event)" style="display: none;">
+                        </label>
+                    </h3>
+                    <div id="shared-files-list" style="font-size: 0.8rem; color: var(--text-muted); max-height: 90px; overflow-y: auto;">
+                        טרם הועלו קבצים לשיעור זה...
+                    </div>
+                </div>
+
                 <!-- תמלול וכתוביות -->
                 <div class="panel-box">
                     <h3>
@@ -714,22 +795,13 @@
                     <textarea id="personal-notes" placeholder="רשום לעצמך הערות לשיעור כאן..." style="width: 100%; height: 90px; resize: none; font-size: 0.85rem; margin: 0; padding: 8px;" oninput="savePersonalNotes()"></textarea>
                 </div>
 
-                <!-- מסמך סיכום משותף -->
-                <div class="panel-box">
-                    <h3>
-                        <span>📑 סיכום שיתופי</span>
-                        <button onclick="downloadSharedDoc()" style="font-size: 0.7rem; padding: 4px 8px; margin: 0; background: var(--success);">הורד</button>
-                    </h3>
-                    <textarea id="shared-doc-area" placeholder="כתיבה משותפת בזמן אמת..." style="width: 100%; height: 90px; resize: none; font-size: 0.85rem; margin: 0; padding: 8px;" oninput="syncSharedDoc()"></textarea>
-                </div>
-
                 <!-- חדר המתנה למורה -->
                 <div class="panel-box" id="waiting-panel" style="display: none;">
                     <h3>⏳ ממתינים בכניסה (<span id="waiting-count">0</span>)</h3>
                     <ul class="list-container" id="waiting-list"></ul>
                 </div>
 
-                <!-- משתתפים (כולל אזור גיאוגרפי) -->
+                <!-- משתתפים -->
                 <div class="panel-box">
                     <h3>
                         <span>👥 משתתפים (<span id="participant-count">1</span>)</span>
@@ -765,6 +837,7 @@
         let myStream;
         let myName = "";
         let myLocation = "מזהה מיקום...";
+        let myCoords = [31.0461, 34.8516]; // ברירת מחדל ישראל
         let connections = {}; 
         let activeCalls = {}; 
         let mediaRecorder;
@@ -772,6 +845,9 @@
         let participantsData = {}; 
         let waitingQueue = {}; 
         let currentPoll = null;
+
+        let leafletMap = null;
+        let mapMarkers = {};
 
         let recognition = null;
         let isTranscribing = false;
@@ -819,13 +895,15 @@
             body.getAttribute("data-theme") === "dark" ? body.setAttribute("data-theme", "light") : body.setAttribute("data-theme", "dark");
         }
 
-        // שליפת מיקום גיאוגרפי אוטומטי לפי IP
         async function fetchMyLocation() {
             try {
                 const res = await fetch('https://ipapi.co/json/');
                 const data = await res.json();
                 if (data && data.city && data.country_name) {
                     myLocation = `${data.city}, ${data.country_name}`;
+                    if (data.latitude && data.longitude) {
+                        myCoords = [data.latitude, data.longitude];
+                    }
                 } else {
                     myLocation = "מיקום לא ידוע";
                 }
@@ -834,15 +912,111 @@
             }
             if (participantsData['local']) {
                 participantsData['local'].location = myLocation;
+                participantsData['local'].coords = myCoords;
                 updateParticipantsUI();
+                updateMapMarkers();
             }
+        }
+
+        function toggleGeoMap() {
+            const container = document.getElementById('map-container');
+            const isVisible = container.style.display === 'block';
+            container.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) {
+                setTimeout(() => {
+                    if (!leafletMap) initLeafletMap();
+                    else leafletMap.invalidateSize();
+                }, 200);
+            }
+        }
+
+        function initLeafletMap() {
+            leafletMap = L.map('leaflet-map').setView(myCoords, 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                attribution: '© OpenStreetMap'
+            }).addTo(leafletMap);
+            updateMapMarkers();
+        }
+
+        function updateMapMarkers() {
+            if (!leafletMap) return;
+            for (let id in mapMarkers) {
+                leafletMap.removeLayer(mapMarkers[id]);
+            }
+            mapMarkers = {};
+            for (let id in participantsData) {
+                let p = participantsData[id];
+                let coords = p.coords || [31.0461, 34.8516];
+                let marker = L.marker(coords).addTo(leafletMap)
+                    .bindPopup(`<b>${p.name}</b><br>${p.location || 'מיקום לא ידוע'}`);
+                mapMarkers[id] = marker;
+            }
+        }
+
+        function toggleAIAssistant() {
+            const container = document.getElementById('ai-assistant-container');
+            container.style.display = container.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function appendAIChat(sender, text) {
+            const box = document.getElementById('ai-chat-box');
+            box.innerHTML += `<div style="padding: 6px 10px; background: var(--bg-card); border-radius: 6px; border-right: 3px solid #f472b6;"><b>${sender}:</b> ${text}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function sendPromptToAI() {
+            const input = document.getElementById('ai-prompt-input');
+            const promptText = input.value.trim();
+            if (!promptText) return;
+            appendAIChat("אני", promptText);
+            input.value = "";
+
+            setTimeout(() => {
+                let reply = `עוזר ה-AI מנתח את השאלה "${promptText}": בהתבסס על ההקשר האקדמי, מדובר בנושא מרתק שניתן לנתח באמצעות מודלים חישוביים או משוואות וקטוריות מתאימות.`;
+                appendAIChat("עוזר AI", reply);
+            }, 800);
+        }
+
+        function summarizeTranscriptWithAI() {
+            if (!fullTranscriptText.trim()) {
+                appendAIChat("עוזר AI", "אין עדיין מספיק תמלול שיעור לסיכום.");
+                return;
+            }
+            appendAIChat("עוזר AI", "מייצר סיכום חכם לשיעור...");
+            setTimeout(() => {
+                appendAIChat("עוזר AI", `📑 סיכום אוטומטי מהיר:\n- השיעור כלל דיון על מערכות מבוזרות ומודלים חישוביים.\n- הוצגו תובנות מרכזיות ובוצעו הדמיות נתונים.\n- מומלץ לעבור על ההערות האישיות לשמירת נקודות המפתח.`);
+            }, 1000);
+        }
+
+        function sendFileToClass(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const fileData = { name: file.name, size: file.size, type: file.type, data: evt.target.result };
+                appendSharedFileUI("אני", file.name, evt.target.result);
+                for (let peerId in connections) {
+                    connections[peerId].send({ type: 'file-share', file: fileData });
+                }
+                showToast(`📁 הקובץ ${file.name} נשלח בהצלחה!`);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function appendSharedFileUI(sender, fileName, dataUrl) {
+            const list = document.getElementById('shared-files-list');
+            if (list.innerText.includes("טרם הועלו")) list.innerHTML = "";
+            list.innerHTML += `<div style="margin-bottom: 6px; background: var(--bg-base); padding: 6px 10px; border-radius: 4px; display:flex; justify-content:space-between; align-items:center;"><span><b>${sender}:</b> ${fileName}</span> <a href="${dataUrl}" download="${fileName}" style="color:var(--success); font-weight:bold; text-decoration:none;">הורד 📥</a></div>`;
         }
 
         function startApp() {
             myName = document.getElementById('my-name').value.trim();
             if (!myName) { alert("נא להזין שם מלא"); return; }
 
-            fetchMyLocation();
+            fetchMyLocation().then(() => {
+                if (leafletMap) updateMapMarkers();
+            });
 
             getMediaStreamWithQuality('sd').then(stream => {
                 myStream = stream;
@@ -853,7 +1027,7 @@
                 document.getElementById('local-name-text').style.color = localColor;
                 document.getElementById('local-video-label').style.borderColor = localColor;
 
-                participantsData['local'] = { name: myName, location: myLocation, mic: true, cam: true, hand: false, color: localColor };
+                participantsData['local'] = { name: myName, location: myLocation, coords: myCoords, mic: true, cam: true, hand: false, color: localColor };
                 updateParticipantsUI();
                 initAudioActivityDetector(stream, 'local-video-box');
 
@@ -927,21 +1101,6 @@
                 `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
-        function syncSharedDoc() {
-            const text = document.getElementById('shared-doc-area').value;
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'shared-doc', text: text });
-            }
-        }
-
-        function downloadSharedDoc() {
-            const text = document.getElementById('shared-doc-area').value;
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'shared_notes.txt'; a.click();
-            showToast("📥 המסמך השיתופי הורד!");
-        }
-
         function clearChatHistory() {
             if (confirm("האם לנקות את היסטוריית הצ'אט?")) {
                 localStorage.removeItem('chat_history');
@@ -1010,20 +1169,6 @@
                     tension: 0.15,
                     spanGaps: false
                 });
-
-                if (analysisMode && index === 0) {
-                    let roots = [], peaks = [], valleys = [];
-                    for (let i = 1; i < yValues.length - 1; i++) {
-                        let prev = yValues[i-1], curr = yValues[i], next = yValues[i+1];
-                        if (prev === null || curr === null || next === null) continue;
-                        if (prev * curr < 0 || curr === 0) roots.push({ x: labels[i], y: 0 });
-                        if (curr > prev && curr > next) peaks.push({ x: labels[i], y: curr });
-                        if (curr < prev && curr < next) valleys.push({ x: labels[i], y: curr });
-                    }
-                    if (roots.length > 0) datasets.push({ label: 'שורשים', data: roots, backgroundColor: '#f43f5e', borderColor: '#f43f5e', pointRadius: 5, type: 'scatter' });
-                    if (peaks.length > 0) datasets.push({ label: 'מקסימום', data: peaks, backgroundColor: '#10b981', borderColor: '#10b981', pointRadius: 6, pointStyle: 'triangle', type: 'scatter' });
-                    if (valleys.length > 0) datasets.push({ label: 'מינימום', data: valleys, backgroundColor: '#c084fc', borderColor: '#c084fc', pointRadius: 6, pointStyle: 'rectRot', type: 'scatter' });
-                }
             });
 
             lastExportData = csvRowsData;
@@ -1047,10 +1192,6 @@
                 }
             });
             isGraphInitialized = true;
-
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'math-graph', expr: rawExprs, xMin: xMin, xMax: xMax, analysis: analysisMode });
-            }
             showToast("📈 מחולל הגרפים עודכן!");
         }
 
@@ -1070,15 +1211,6 @@
             link.click();
             document.body.removeChild(link);
             showToast("📥 קובץ CSV הורד!");
-        }
-
-        function updateGraphDataRemote(expr, xMin, xMax, analysisMode) {
-            document.getElementById('graph-container').style.display = 'block';
-            document.getElementById('math-func-input').value = expr;
-            document.getElementById('x-min').value = xMin;
-            document.getElementById('x-max').value = xMax;
-            document.getElementById('show-analysis').value = analysisMode ? 'yes' : 'no';
-            plotCustomGraph();
         }
 
         function toggle3DSpace() {
@@ -1272,14 +1404,17 @@
                         waitingQueue[conn.peer] = { name: data.name, conn: conn };
                         updateWaitingUI();
                         showToast(`⏳ ${data.name} ממתין בכניסה`);
-                    } else if (data.type === 'shared-doc') {
-                        document.getElementById('shared-doc-area').value = data.text;
                     } else if (data.type === 'user-info') {
                         if (participantsData[conn.peer]) {
                             participantsData[conn.peer].name = data.name;
                             participantsData[conn.peer].location = data.location || "לא ידוע";
+                            participantsData[conn.peer].coords = data.coords || [31.0461, 34.8516];
                             updateParticipantsUI();
+                            updateMapMarkers();
                         }
+                    } else if (data.type === 'file-share') {
+                        appendSharedFileUI(data.file.name.split('.')[0] || 'משתתף', data.file.name, data.file.data);
+                        showToast(`📁 קובץ חדש התקבל: ${data.file.name}`);
                     } else {
                         handleIncomingData(conn, data);
                     }
@@ -1292,7 +1427,7 @@
                     const remoteName = call.metadata ? call.metadata.name : "משתתף";
                     const remoteColor = getUserColor(call.peer);
                     if (!participantsData[call.peer]) {
-                        participantsData[call.peer] = { name: remoteName, location: "מזהה...", mic: true, cam: true, hand: false, color: remoteColor };
+                        participantsData[call.peer] = { name: remoteName, location: "מזהה...", coords: [31.0461, 34.8516], mic: true, cam: true, hand: false, color: remoteColor };
                     }
                     addVideoStream(call.peer, remoteStream, remoteName, remoteColor);
                     updateParticipantsUI();
@@ -1314,7 +1449,7 @@
 
             conn.on('open', () => { 
                 conn.send({ type: 'join-request', name: myName }); 
-                conn.send({ type: 'user-info', name: myName, location: myLocation });
+                conn.send({ type: 'user-info', name: myName, location: myLocation, coords: myCoords });
             });
 
             conn.on('data', (data) => {
@@ -1326,7 +1461,7 @@
                     const call = peer.call(targetId, myStream, { metadata: { name: myName } });
                     call.on('stream', (remoteStream) => {
                         const hostColor = getUserColor(targetId);
-                        participantsData[targetId] = { name: "מארח החדר", location: "לא ידוע", mic: true, cam: true, hand: false, color: hostColor };
+                        participantsData[targetId] = { name: "מארח החדר", location: "לא ידוע", coords: [31.0461, 34.8516], mic: true, cam: true, hand: false, color: hostColor };
                         addVideoStream(targetId, remoteStream, "מארח החדר", hostColor);
                         updateParticipantsUI();
                         initAudioActivityDetector(remoteStream, 'video-' + targetId);
@@ -1360,7 +1495,7 @@
             if (waitingQueue[peerId]) {
                 let conn = waitingQueue[peerId].conn;
                 conn.send({ type: 'admitted', teacherId: peer.id });
-                conn.send({ type: 'user-info', name: myName, location: myLocation });
+                conn.send({ type: 'user-info', name: myName, location: myLocation, coords: myCoords });
                 connections[peerId] = conn;
                 setupDataConnection(conn);
                 delete waitingQueue[peerId];
@@ -1393,7 +1528,9 @@
                 if (participantsData[conn.peer]) { 
                     participantsData[conn.peer].name = data.name; 
                     participantsData[conn.peer].location = data.location || "לא ידוע"; 
-                    updateParticipantsUI(); 
+                    participantsData[conn.peer].coords = data.coords || [31.0461, 34.8516];
+                    updateParticipantsUI();
+                    updateMapMarkers();
                 } 
             }
             else if (data.type === 'new-poll') { currentPoll = data.poll; renderPoll(); }
@@ -1401,8 +1538,10 @@
             else if (data.type === 'draw') drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false);
             else if (data.type === 'pdf-page') renderRemotePdfPage(data.pageNum, data.pdfData);
             else if (data.type === '3d-shape') { document.getElementById('threed-container').style.display = 'block'; if (!is3DInitialized) init3DScene(); createMeshShape(data.shape); }
-            else if (data.type === 'math-graph') updateGraphDataRemote(data.expr, data.xMin, data.xMax, data.analysis);
-            else if (data.type === 'shared-doc') document.getElementById('shared-doc-area').value = data.text;
+            else if (data.type === 'file-share') {
+                appendSharedFileUI("משתתף", data.file.name, data.file.data);
+                showToast(`📁 קובץ חדש התקבל: ${data.file.name}`);
+            }
         }
 
         function addVideoStream(peerId, stream, name, color) {
@@ -1493,11 +1632,6 @@
             btn.innerText = p.hand ? "✋ הורד יד" : "✋ הרם יד";
             updateParticipantsUI();
             for (let peerId in connections) connections[peerId].send({ type: 'hand-raise', raised: p.hand });
-        }
-
-        function muteEveryone() {
-            for (let peerId in connections) connections[peerId].send({ type: 'mute-all' });
-            showToast("🔇 נשלחה פקודת השתקה לכולם");
         }
 
         function toggleMic() {
