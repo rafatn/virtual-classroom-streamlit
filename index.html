@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית מתקדמת - כולל סיכום שיעור אוטומטי</title>
+    <title>כיתה וירטואלית - גרסה מתוקנת ויציבה</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -276,7 +276,7 @@
     <div id="toast-container"></div>
 
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית - כולל סיכום שיעור אוטומטי</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית - גרסה יציבה ומתוקנת</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -478,22 +478,12 @@
                         updateParticipantsUI();
                         updateVideoLabel(conn.peer);
                     }
-                } else if (data.type === 'mute-specific') {
-                    const audioTrack = myStream.getAudioTracks()[0];
-                    if (audioTrack.enabled) {
-                        audioTrack.enabled = false;
-                        document.getElementById('mic-btn').innerText = "🎤 הפעל מיקרופון";
-                        document.getElementById('mic-btn'].style.background = "#ef4444";
-                        updateLocalStatusIcons();
-                        broadcastStatus();
-                        showToast("🔇 המורה הפעיל השתקה אישית למיקרופון שלך");
-                    }
                 } else if (data.type === 'mute-all') {
                     const audioTrack = myStream.getAudioTracks()[0];
                     if (audioTrack.enabled) {
                         audioTrack.enabled = false;
                         document.getElementById('mic-btn').innerText = "🎤 הפעל מיקרופון";
-                        document.getElementById('mic-btn'].style.background = "#ef4444";
+                        document.getElementById('mic-btn').style.background = "#ef4444";
                         updateLocalStatusIcons();
                         broadcastStatus();
                         showToast("🔇 המורה הפעיל השתקה גלובלית לכולם");
@@ -554,20 +544,12 @@
                 let micIcon = p.mic ? "🎤" : "🔇";
                 let camIcon = p.cam ? "📹" : "📷❌";
                 let handIcon = p.hand ? " ✋" : "";
-                let muteButton = (id !== 'local') ? `<button onclick="muteSpecificUser('${id}')" style="font-size:0.7rem; padding:2px 6px; background:#b91c1c; margin:0;">השתק</button>` : "";
 
-                html += `<li><span><b>${p.name}</b>${handIcon}</span> <span style="display:flex; gap:6px; align-items:center;">${micIcon} ${camIcon} ${muteButton}</span></li>`;
+                html += `<li><span><b>${p.name}</b>${handIcon}</span> <span style="display:flex; gap:6px; align-items:center;">${micIcon} ${camIcon}</span></li>`;
             }
 
             listEl.innerHTML = html;
             document.getElementById('participant-count').innerText = count;
-        }
-
-        function muteSpecificUser(peerId) {
-            if (connections[peerId]) {
-                connections[peerId].send({ type: 'mute-specific' });
-                showToast(`🔇 נשלחה פקודת השתקה ל-${participantsData[peerId]?.name || 'משתתף'}`);
-            }
         }
 
         function toggleBackgroundBlur() {
@@ -634,7 +616,6 @@
             showToast("✅ הצבעתך נקלטה בסקר!");
         }
 
-        // --- שמירת סיכום שיעור אוטומטי ---
         function downloadMeetingSummary() {
             let summaryText = `=====================================\n`;
             summaryText += `       סיכום שיעור וירטואלי - אוטומטי\n`;
@@ -657,7 +638,7 @@
                     summaryText += `  - ${opt}: ${v} קולות (${p}%)\n`;
                 });
             } else {
-                summaryText += `לא פוצלו או התקיימו סקרים בשיעור זה.\n`;
+                summaryText += `לא התקיימו סקרים בשיעור זה.\n`;
             }
 
             summaryText += `\n--- היסטוריית צ'אט וקבצים ---\n`;
@@ -676,7 +657,6 @@
 
             summaryText += `\n=====================================\n`;
 
-            // הורדת הקובץ אוטומטית למחשב
             const blob = new Blob([summaryText], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
