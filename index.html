@@ -662,11 +662,7 @@
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
-                        <div id="analysis-legend" style="display: none; gap: 12px; font-size: 0.8rem; color: var(--text-muted);">
-                            <span style="color: #f43f5e;">🔴 חיתוך ציר X (שורשים)</span>
-                            <span style="color: #10b981;">🟢 מקסימום מקומי</span>
-                            <span style="color: #c084fc;">🟣 מינימום מקומי</span>
-                        </div>
+                        <div id="analysis-legend" style="display: none; gap: 12px; font-size: 0.8rem; color: var(--text-muted);"></div>
                         <button onclick="exportCSV()" class="btn-success" style="padding: 6px 14px; font-size: 0.85rem; margin: 0;">📥 הורד את טבלת הנתונים המלאה (CSV)</button>
                     </div>
                 </div>
@@ -892,6 +888,7 @@
             expressions.forEach((expr, index) => {
                 let yValues = [];
                 let compiledFunc;
+                let funcColor = colors[index % colors.length];
 
                 try {
                     compiledFunc = new Function('x', 'with(Math) { return ' + expr + '; }');
@@ -914,9 +911,9 @@
                 csvRowsData[`y_${index+1} (${expr})`] = yValues;
 
                 datasets.push({
-                    label: `y = ${expr}`,
+                    label: `פונקציה ${index + 1}: y = ${expr}`,
                     data: yValues,
-                    borderColor: colors[index % colors.length],
+                    borderColor: funcColor,
                     backgroundColor: 'transparent',
                     borderWidth: 2.5,
                     pointRadius: 0,
@@ -948,7 +945,7 @@
                     }
 
                     if (roots.length > 0) {
-                        datasets.push({ label: 'שורשים (חיתוך X)', data: roots, backgroundColor: '#f43f5e', borderColor: '#f43f5e', pointRadius: 5, pointStyle: 'circle', type: 'scatter' });
+                        datasets.push({ label: 'שורשים (חיתוך ציר X)', data: roots, backgroundColor: '#f43f5e', borderColor: '#f43f5e', pointRadius: 5, pointStyle: 'circle', type: 'scatter' });
                     }
                     if (peaks.length > 0) {
                         datasets.push({ label: 'מקסימום מקומי', data: peaks, backgroundColor: '#10b981', borderColor: '#10b981', pointRadius: 6, pointStyle: 'triangle', type: 'scatter' });
@@ -981,10 +978,10 @@
                             position: 'top',
                             labels: { 
                                 color: '#f8fafc',
-                                boxWidth: 20,
+                                boxWidth: 16,
                                 padding: 15,
                                 font: {
-                                    size: 13,
+                                    size: 12,
                                     family: 'system-ui'
                                 }
                             } 
