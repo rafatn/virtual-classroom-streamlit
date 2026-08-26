@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית מתקדמת - רוחב פס, PDF, חדר המתנה וסקרים</title>
+    <title>כיתה וירטואלית אולטימטיבית - תמלול חי, PDF, חדר המתנה וסקרים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js להצגת קבצי PDF על הלוח -->
@@ -99,30 +99,13 @@
             transition: transform 0.2s;
         }
 
-        .video-box:hover {
-            border-color: var(--accent);
-        }
+        .video-box:hover { border-color: var(--accent); }
+        .video-box.spotlight { grid-column: 1 / -1; aspect-ratio: 21/9; max-height: 450px; }
 
-        .video-box.spotlight {
-            grid-column: 1 / -1;
-            aspect-ratio: 21/9;
-            max-height: 450px;
-        }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .blur-bg video { filter: blur(8px) contrast(1.1); }
 
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .blur-bg video {
-            filter: blur(8px) contrast(1.1);
-        }
-
-        /* מצב חיסכון ברוחב פס - הסתרת וידאו מרחוק */
-        .audio-only-mode video {
-            display: none !important;
-        }
+        .audio-only-mode video { display: none !important; }
         .audio-only-placeholder {
             display: none;
             width: 100%;
@@ -132,9 +115,7 @@
             background: #334155;
             font-size: 2.5rem;
         }
-        .audio-only-mode .audio-only-placeholder {
-            display: flex;
-        }
+        .audio-only-mode .audio-only-placeholder { display: flex; }
 
         .video-label {
             position: absolute;
@@ -164,12 +145,12 @@
             gap: 15px;
         }
 
-        .participants-panel, .waiting-panel, .bandwidth-panel {
+        .participants-panel, .waiting-panel, .bandwidth-panel, .transcript-panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 15px;
-            max-height: 200px;
+            max-height: 180px;
             overflow-y: auto;
         }
 
@@ -207,7 +188,7 @@
             padding: 15px;
             display: flex;
             flex-direction: column;
-            height: 280px;
+            height: 250px;
         }
 
         .chat-messages {
@@ -222,21 +203,9 @@
             text-align: right;
         }
 
-        .chat-input-area {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .chat-row {
-            display: flex;
-            gap: 5px;
-        }
-
-        .chat-row input {
-            flex: 1;
-            margin: 0;
-        }
+        .chat-input-area { display: flex; flex-direction: column; gap: 8px; }
+        .chat-row { display: flex; gap: 5px; }
+        .chat-row input { flex: 1; margin: 0; }
 
         #whiteboard-container {
             display: none;
@@ -256,13 +225,7 @@
             flex-wrap: wrap;
         }
 
-        canvas {
-            background: #ffffff;
-            border: 2px solid #ccc;
-            border-radius: 6px;
-            cursor: crosshair;
-            max-width: 100%;
-        }
+        canvas { background: #ffffff; border: 2px solid #ccc; border-radius: 6px; cursor: crosshair; max-width: 100%; }
 
         #toast-container {
             position: fixed;
@@ -295,11 +258,7 @@
             100% { opacity: 0; transform: translateY(-20px); }
         }
 
-        #waiting-room-screen {
-            display: none;
-            text-align: center;
-            padding: 40px;
-        }
+        #waiting-room-screen { display: none; text-align: center; padding: 40px; }
     </style>
 </head>
 <body>
@@ -307,7 +266,7 @@
     <div id="toast-container"></div>
 
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית - בקרת איכות, PDF, חדר המתנה וסקרים</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית עם תמלול קול חי, PDF וסקרים</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -324,10 +283,10 @@
             <button onclick="joinClassRoom()">הצטרף לחדר קיים</button>
         </div>
 
-        <!-- מסך המתנה פעיל לתלמיד שממתין לאישור מאת המורה -->
+        <!-- מסך המתנה פעיל לתלמיד -->
         <div class="card" id="waiting-room-screen">
             <h3>⏳ ממתין לאישור כניסה לשיעור...</h3>
-            <p>בקשתך נשלחה למורה. אנא המתן בזמן שהמורה יאשר את כניסתך לחדר.</p>
+            <p>בקשתך נשלחה למורה. אנא המתן בזמן שהמורה יאשר את כניסתך.</p>
         </div>
 
         <!-- אזור השידור והכלים -->
@@ -375,7 +334,6 @@
                             📁 העלה PDF <input type="file" id="pdf-upload" accept="application/pdf" onchange="loadPDF(event)" style="display: none;">
                         </label>
                     </div>
-                    <!-- בקרי דפדפני PDF -->
                     <div id="pdf-controls" style="display: none; margin-bottom: 8px; font-size: 0.85rem; color: #000;">
                         <button onclick="prevPdfPage()" style="padding: 2px 8px; background: #475569;">◀ עמוד קודם</button>
                         <span>עמוד <span id="pdf-page-num">1</span> מתוך <span id="pdf-page-count">1</span></span>
@@ -387,26 +345,40 @@
 
             <!-- פאנלים בצד -->
             <div class="panels-container">
-                <!-- פאנל ניהול רוחב פס ואיכות -->
+                <!-- פאנל תמלול קול חי (Speech-to-Text) -->
+                <div class="transcript-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <h3 style="margin: 0; font-size: 0.95rem; color: #38bdf8;">📝 תמלול קול חי</h3>
+                        <div>
+                            <button id="stt-btn" onclick="toggleSpeechToText()" style="font-size: 0.7rem; padding: 3px 6px; background: #0ea5e9; margin: 0;">הפעל תמלול</button>
+                            <button onclick="downloadTranscript()" style="font-size: 0.7rem; padding: 3px 6px; background: #22c55e; margin: 0;">שמור טקסט</button>
+                        </div>
+                    </div>
+                    <div id="transcript-box" style="background: #0f172a; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-size: 0.85rem; height: 90px; overflow-y: auto; text-align: right; color: #cbd5e1;">
+                        לחץ על "הפעל תמלול" כדי להפוך דיבור לטקסט בזמן אמת...
+                    </div>
+                </div>
+
+                <!-- פאנל ניהול רוחב פס -->
                 <div class="bandwidth-panel">
-                    <h3 style="margin: 0 0 8px; font-size: 0.95rem; color: #38bdf8;">⚙️ ניהול רוחב פס וחיבור</h3>
+                    <h3 style="margin: 0 0 6px; font-size: 0.95rem; color: #38bdf8;">⚙️ ניהול רוחב פס</h3>
                     <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
                         <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                            <span>מצב שמע בלבד (חסוך אינטרנט):</span>
-                            <input type="checkbox" id="bandwidth-audio-mode" onchange="toggleAudioOnlyMode(this)" style="margin:0; width: 18px; height: 18px;">
+                            <span>מצב שמע בלבד:</span>
+                            <input type="checkbox" id="bandwidth-audio-mode" onchange="toggleAudioOnlyMode(this)" style="margin:0; width: 16px; height: 16px;">
                         </label>
                         <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <span>רזולוציית מצלמה שלי:</span>
-                            <select id="video-quality-select" onchange="changeVideoQuality(this.value)" style="padding: 4px; font-size: 0.8rem; margin: 0;">
-                                <option value="hd">HD (גבוהה)</option>
-                                <option value="sd" selected>רגילה (SD)</option>
-                                <option value="low">נמוכה (לחיסכון)</option>
+                            <span>רזולוציה:</span>
+                            <select id="video-quality-select" onchange="changeVideoQuality(this.value)" style="padding: 2px; font-size: 0.8rem; margin: 0;">
+                                <option value="hd">HD גבוהה</option>
+                                <option value="sd" selected>SD רגילה</option>
+                                <option value="low">נמוכה</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- פאנל חדר המתנה (יופיע למארח/המורה כשיש ממתינים) -->
+                <!-- פאנל חדר המתנה למורה -->
                 <div class="waiting-panel" id="waiting-panel" style="display: none;">
                     <h3 style="margin: 0 0 5px; font-size: 0.95rem; color: #f59e0b;">⏳ חדר המתנה (<span id="waiting-count">0</span>)</h3>
                     <ul class="waiting-list" id="waiting-list"></ul>
@@ -414,31 +386,27 @@
 
                 <!-- רשימת משתתפים -->
                 <div class="participants-panel">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 5px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 4px;">
                         <h3 style="margin: 0; font-size: 0.95rem;">👥 משתתפים (<span id="participant-count">1</span>)</h3>
-                        <button onclick="openPollModal()" style="font-size: 0.75rem; padding: 4px 8px; margin: 0; background: #6366f1;">📊 צור סקר</button>
+                        <button onclick="openPollModal()" style="font-size: 0.75rem; padding: 3px 6px; margin: 0; background: #6366f1;">📊 סקר</button>
                     </div>
                     <ul class="participants-list" id="participants-list"></ul>
                 </div>
 
                 <!-- פאנל סקרים -->
                 <div class="poll-panel" id="poll-area" style="display: none;">
-                    <h3 style="margin-top: 0; font-size: 0.95rem; color: #38bdf8;">📊 סקר כיתתי פעיל</h3>
+                    <h3 style="margin-top: 0; font-size: 0.95rem; color: #38bdf8;">📊 סקר כיתתי</h3>
                     <div id="poll-content" style="font-size: 0.9rem;"></div>
                 </div>
 
                 <!-- פאנל צ'אט -->
                 <div class="tools-panel">
-                    <h3 style="margin-top: 0; font-size: 0.95rem;">💬 צ'אט כיתתי</h3>
+                    <h3 style="margin-top: 0; font-size: 0.95rem;">💬 צ'אט</h3>
                     <div class="chat-messages" id="chat-messages"></div>
                     <div class="chat-input-area">
                         <div class="chat-row">
                             <input type="text" id="chat-input" placeholder="כתוב הודעה..." onkeypress="handleChatKey(event)">
                             <button onclick="sendChatMessage()">שלח</button>
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: #94a3b8;">
-                            <span>צרף קובץ:</span>
-                            <input type="file" id="file-input" onchange="sendFile(event)" style="font-size: 0.7rem; padding: 2px; margin: 0; background: #0f172a;">
                         </div>
                     </div>
                 </div>
@@ -458,7 +426,12 @@
         let waitingQueue = {}; 
         let currentPoll = null;
 
-        // משתני ניהול PDF על הלוח
+        // משתני תמלול דיבור לטקסט (SpeechRecognition)
+        let recognition = null;
+        let isTranscribing = false;
+        let fullTranscriptText = "";
+
+        // משתני PDF
         let pdfDoc = null;
         let pageNum = 1;
         let pageRendering = false;
@@ -486,9 +459,102 @@
 
                 loadChatHistory();
                 initPeerServer();
+                initSpeechRecognition();
             }).catch(err => alert("שגיאה בגישה למצלמה: " + err.message));
         }
 
+        // --- הפיכת קול לטקסט (Speech to Text) ---
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                console.warn("הדפדפן אינו תומך בהמרת דיבור לטקסט מובנית");
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.lang = 'he-IL'; // שפה עברית
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onresult = (event) => {
+                let interimText = '';
+                let finalText = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalText += event.results[i][0].transcript + ' ';
+                    } else {
+                        interimText += event.results[i][0].transcript;
+                    }
+                }
+
+                if (finalText) {
+                    fullTranscriptText += `${myName}: ${finalText}\n`;
+                    // שידור התמלול לכל שאר המשתתפים בחדר
+                    for (let peerId in connections) {
+                        connections[peerId].send({ type: 'transcript', text: `${myName}: ${finalText}` });
+                    }
+                }
+
+                updateTranscriptBox(fullTranscriptText + interimText);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("שגיאת תמלול קול", event.error);
+            };
+
+            recognition.onend = () => {
+                if (isTranscribing) {
+                    try { recognition.start(); } catch (e) {}
+                }
+            };
+        }
+
+        function toggleSpeechToText() {
+            if (!recognition) {
+                alert("הדפדפן שלך אינו תומך בתמלול אוטומטי (מומלץ להשתמש ב-Google Chrome).");
+                return;
+            }
+
+            const btn = document.getElementById('stt-btn');
+            isTranscribing = !isTranscribing;
+
+            if (isTranscribing) {
+                try {
+                    recognition.start();
+                    btn.innerText = "עצור תמלול";
+                    btn.style.background = "#ef4444";
+                    showToast("🎙️ תמלול קול חי הופעל בהצלחה");
+                } catch (e) {}
+            } else {
+                recognition.stop();
+                btn.innerText = "הפעל תמלול";
+                btn.style.background = "#0ea5e9";
+                showToast("⏹️ תמלול קול הופסק");
+            }
+        }
+
+        function updateTranscriptBox(text) {
+            const box = document.getElementById('transcript-box');
+            box.innerText = text || "הקש על הפעל תמלול כדי להתחיל לשמוע ולתעד את השיעור...";
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function downloadTranscript() {
+            if (!fullTranscriptText.trim()) {
+                alert("אין עדיין טקסט שמור להורדה");
+                return;
+            }
+            const blob = new Blob([fullTranscriptText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lesson-transcript.txt';
+            a.click();
+            showToast("💾 סיכום השיעור הורד בהצלחה!");
+        }
+
+        // --- ניהול מדיה ואיכות ---
         function getMediaStreamWithQuality(quality) {
             let constraints = { video: true, audio: true };
             if (quality === 'low') {
@@ -504,41 +570,31 @@
         function changeVideoQuality(quality) {
             getMediaStreamWithQuality(quality).then(newStream => {
                 let videoTrack = newStream.getVideoTracks()[0];
-                let audioTrack = newStream.getAudioTracks()[0];
-                
-                // החלפת הטרק במצלמה המקומית
                 localVideo.srcObject = newStream;
                 myStream = newStream;
 
-                // עדכון הטרקים בכל השיחות הפעילות מול משתתפים אחרים
                 for (let peerId in activeCalls) {
                     let sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
                     if (sender) sender.replaceTrack(videoTrack);
                 }
-                showToast("⚙️ איכות המצלמה עודכנה בהצלחה");
-            }).catch(err => {
-                console.error("שגיאה בשינוי רזולוציה", err);
+                showToast("⚙️ איכות המצלמה עודכנה");
             });
         }
 
         function toggleAudioOnlyMode(checkbox) {
             const isAudioOnly = checkbox.checked;
-            // עובר על כל תיקיות הווידאו ומפעיל/מכבה את תצוגת הווידאו שלהן לצורך חיסכון בנתונים
             document.querySelectorAll('.video-box').forEach(box => {
-                if (isAudioOnly) {
-                    box.classList.add('audio-only-mode');
-                } else {
-                    box.classList.remove('audio-only-mode');
-                }
+                if (isAudioOnly) box.classList.add('audio-only-mode');
+                else box.classList.remove('audio-only-mode');
             });
-            showToast(isAudioOnly ? "📶 מצב שמע בלבד הופעל (רוחב פס נמוך)" : "📶 מצב וידאו מלא חזר לפעילות");
+            showToast(isAudioOnly ? "📶 מצב שמע בלבד מופעל" : "📶 מצב וידאו מלא חזר");
         }
 
         function initPeerServer(roomId = null) {
             peer = new Peer(roomId);
 
             peer.on('open', (id) => {
-                document.getElementById('room-info').innerHTML = `קוד החדר שלך (שלח לתלמידים): <b>${id}</b>`;
+                document.getElementById('room-info').innerHTML = `קוד החדר שלך: <b>${id}</b>`;
             });
 
             peer.on('connection', (conn) => {
@@ -546,15 +602,10 @@
                     if (data.type === 'join-request') {
                         waitingQueue[conn.peer] = { name: data.name, conn: conn };
                         updateWaitingUI();
-                        showToast(`⏳ תלמיד/ה חדש/ה (${data.name}) ממתין בחדר ההמתנה`);
-                    } else if (data.type === 'admitted') {
-                        document.getElementById('waiting-room-screen').style.display = 'none';
-                        document.getElementById('main-layout').style.display = 'grid';
-                        showToast("✅ המורה אישר את כניסתך לשיעור!");
-                        connectToTeacherRoom(data.teacherId);
-                    } else if (data.type === 'rejected') {
-                        alert("המורה דחה את בקשת ההצטרפות לשיעור.");
-                        location.reload();
+                        showToast(`⏳ ${data.name} ממתין בכניסה`);
+                    } else if (data.type === 'transcript') {
+                        fullTranscriptText += `${data.text}\n`;
+                        updateTranscriptBox(fullTranscriptText);
                     } else {
                         handleIncomingData(conn, data);
                     }
@@ -568,7 +619,6 @@
                     participantsData[call.peer] = { name: remoteName, mic: true, cam: true, hand: false };
                     addVideoStream(call.peer, remoteStream, remoteName);
                     updateParticipantsUI();
-                    showToast(`👤 ${remoteName} הצטרף לשיעור`);
                 });
                 activeCalls[call.peer] = call;
             });
@@ -576,7 +626,7 @@
 
         function joinClassRoom() {
             const targetId = document.getElementById('target-room-input').value.trim();
-            if (!targetId) { alert("נא להזין קוד חדר תקין"); return; }
+            if (!targetId) { alert("נא להזין קוד חדר"); return; }
 
             document.getElementById('room-controls').style.display = 'none';
             document.getElementById('waiting-room-screen').style.display = 'block';
@@ -584,15 +634,13 @@
             const conn = peer.connect(targetId, { metadata: { name: myName } });
             connections[targetId] = conn;
 
-            conn.on('open', () => {
-                conn.send({ type: 'join-request', name: myName });
-            });
+            conn.on('open', () => { conn.send({ type: 'join-request', name: myName }); });
 
             conn.on('data', (data) => {
                 if (data.type === 'admitted') {
                     document.getElementById('waiting-room-screen').style.display = 'none';
                     document.getElementById('main-layout').style.display = 'grid';
-                    showToast("✅ המורה אישר את כניסתך לשיעור!");
+                    showToast("✅ אושרה כניסתך לשיעור!");
 
                     const call = peer.call(targetId, myStream, { metadata: { name: myName } });
                     call.on('stream', (remoteStream) => {
@@ -602,7 +650,7 @@
                     });
                     activeCalls[targetId] = call;
                 } else if (data.type === 'rejected') {
-                    alert("המורה דחה את בקשתך להיכנס לשיעור.");
+                    alert("המורה דחה את הבקשה.");
                     location.reload();
                 }
             });
@@ -636,7 +684,7 @@
                 setupDataConnection(conn);
                 delete waitingQueue[peerId];
                 updateWaitingUI();
-                showToast("✅ תלמיד אושר והוכנס לשיעור");
+                showToast("✅ תלמיד אושר");
             }
         }
 
@@ -645,7 +693,7 @@
                 waitingQueue[peerId].conn.send({ type: 'rejected' });
                 delete waitingQueue[peerId];
                 updateWaitingUI();
-                showToast("❌ בקשת התלמיד נדחתה");
+                showToast("❌ בקשה נדחתה");
             }
         }
 
@@ -657,16 +705,13 @@
         function handleIncomingData(conn, data) {
             if (data.type === 'chat') {
                 saveAndAppendMessage(data.name, data.text);
-                showToast(`💬 הודעה חדשה מ-${data.name}`);
-            } else if (data.type === 'file') {
-                saveAndAppendFile(data.name, data.fileName, data.fileData);
-                showToast(`📄 קובץ חדש התקבל מ-${data.name}`);
+            } else if (data.type === 'transcript') {
+                fullTranscriptText += `${data.text}\n`;
+                updateTranscriptBox(fullTranscriptText);
             } else if (data.type === 'hand-raise') {
                 if (participantsData[conn.peer]) {
                     participantsData[conn.peer].hand = data.raised;
                     updateParticipantsUI();
-                    updateVideoLabel(conn.peer);
-                    if (data.raised) showToast(`✋ ${participantsData[conn.peer].name} הרים/הרימה את היד!`);
                 }
             } else if (data.type === 'status-update') {
                 if (participantsData[conn.peer]) {
@@ -674,24 +719,11 @@
                     participantsData[conn.peer].cam = data.cam;
                     updateParticipantsUI();
                 }
-            } else if (data.type === 'mute-specific' || data.type === 'mute-all') {
-                const audioTrack = myStream.getAudioTracks()[0];
-                if (audioTrack.enabled) {
-                    audioTrack.enabled = false;
-                    document.getElementById('mic-btn').innerText = "🎤 הפעל מיקרופון";
-                    document.getElementById('mic-btn').style.background = "#ef4444";
-                    broadcastStatus();
-                    showToast("🔇 המורה השתיק את המיקרופון שלך");
-                }
             } else if (data.type === 'new-poll') {
                 currentPoll = data.poll;
                 renderPoll();
-                showToast("📊 סקר חדש התקבל מהמורה!");
             } else if (data.type === 'poll-vote') {
-                if (currentPoll) {
-                    currentPoll.votes[data.optionIndex]++;
-                    renderPoll();
-                }
+                if (currentPoll) { currentPoll.votes[data.optionIndex]++; renderPoll(); }
             } else if (data.type === 'draw') {
                 drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false);
             } else if (data.type === 'pdf-page') {
@@ -704,9 +736,7 @@
 
             const box = document.createElement('div');
             box.className = 'video-box';
-            if (document.getElementById('bandwidth-audio-mode').checked) {
-                box.classList.add('audio-only-mode');
-            }
+            if (document.getElementById('bandwidth-audio-mode').checked) box.classList.add('audio-only-mode');
             box.id = 'video-' + peerId;
             box.onclick = () => toggleSpotlight(box);
 
@@ -721,20 +751,12 @@
 
             const label = document.createElement('div');
             label.className = 'video-label';
-            label.id = 'label-' + peerId;
-            label.innerHTML = `<span>${name}</span><span id="hand-${peerId}"></span><span id="status-${peerId}"></span>`;
+            label.innerHTML = `<span>${name}</span>`;
 
             box.appendChild(video);
             box.appendChild(placeholder);
             box.appendChild(label);
             videoGrid.appendChild(box);
-        }
-
-        function updateVideoLabel(peerId) {
-            const handSpan = document.getElementById('hand-' + peerId);
-            if (handSpan && participantsData[peerId]) {
-                handSpan.innerHTML = participantsData[peerId].hand ? " ✋" : "";
-            }
         }
 
         function updateParticipantsUI() {
@@ -748,47 +770,32 @@
                 let micIcon = p.mic ? "🎤" : "🔇";
                 let camIcon = p.cam ? "📹" : "📷❌";
                 let handIcon = p.hand ? " ✋" : "";
-                let muteButton = (id !== 'local') ? `<button onclick="muteSpecificUser('${id}')" style="font-size:0.7rem; padding:2px 6px; background:#b91c1c; margin:0;">השתק</button>` : "";
-
-                html += `<li><span><b>${p.name}</b>${handIcon}</span> <span style="display:flex; gap:6px; align-items:center;">${micIcon} ${camIcon} ${muteButton}</span></li>`;
+                html += `<li><span><b>${p.name}</b>${handIcon}</span> <span style="display:flex; gap:6px;">${micIcon} ${camIcon}</span></li>`;
             }
             listEl.innerHTML = html;
             document.getElementById('participant-count').innerText = count;
         }
 
-        function muteSpecificUser(peerId) {
-            if (connections[peerId]) {
-                connections[peerId].send({ type: 'mute-specific' });
-                showToast(`🔇 נשלחה פקודת השתקה`);
-            }
-        }
-
         function toggleBackgroundBlur() {
             const box = document.getElementById('local-video-box');
             box.classList.toggle('blur-bg');
-            const isBlurred = box.classList.contains('blur-bg');
-            const btn = document.getElementById('blur-btn');
-            btn.style.background = isBlurred ? "#22c55e" : "#0ea5e9";
-            showToast(isBlurred ? "🌫️ טשטוש רקע הופעל" : "🌫️ טשטוש רקע הוסר");
+            showToast("🌫️ טשטוש רקע עודכן");
         }
 
         function openPollModal() {
-            const question = prompt("הכנס את שאלת הסקר:");
+            const question = prompt("שאלת הסקר:");
             if (!question) return;
-            const opt1 = prompt("אפשרות תשובה 1:");
-            const opt2 = prompt("אפשרות תשובה 2:");
+            const opt1 = prompt("תשובה 1:");
+            const opt2 = prompt("תשובה 2:");
             if (!opt1 || !opt2) return;
 
             let options = [opt1, opt2];
-            const opt3 = prompt("אפשרות תשובה 3 (אופציונלי):");
-            if (opt3) options.push(opt3);
-
-            currentPoll = { question, options, votes: new Array(options.length).fill(0) };
+            currentPoll = { question, options, votes: [0, 0] };
             renderPoll();
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'new-poll', poll: currentPoll });
             }
-            showToast("📊 הסקר נשלח לכל התלמידים!");
+            showToast("📊 סקר נשלח!");
         }
 
         function renderPoll() {
@@ -797,11 +804,11 @@
             area.style.display = 'block';
 
             let totalVotes = currentPoll.votes.reduce((a, b) => a + b, 0);
-            let html = `<p style="margin: 0 0 8px; font-weight: bold;">שאלה: ${currentPoll.question}</p>`;
+            let html = `<p style="margin: 0 0 8px; font-weight: bold;">${currentPoll.question}</p>`;
             currentPoll.options.forEach((opt, index) => {
                 let votesCount = currentPoll.votes[index];
                 let percent = totalVotes > 0 ? Math.round((votesCount / totalVotes) * 100) : 0;
-                html += `<div style="margin-bottom: 6px;"><button onclick="votePoll(${index})" style="width: 100%; text-align: right; padding: 6px 10px; background: #334155; font-size: 0.85rem; margin: 0;">${opt} (${percent}% - ${votesCount} קולות)</button></div>`;
+                html += `<div style="margin-bottom: 6px;"><button onclick="votePoll(${index})" style="width: 100%; text-align: right; padding: 6px; background: #334155; font-size: 0.85rem; margin: 0;">${opt} (${percent}% - ${votesCount})</button></div>`;
             });
             content.innerHTML = html;
         }
@@ -812,7 +819,6 @@
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'poll-vote', optionIndex: index });
             }
-            showToast("✅ הצבעתך נקלטה!");
         }
 
         function toggleSpotlight(boxElement) {
@@ -827,13 +833,11 @@
             const btn = document.getElementById('hand-btn');
             btn.style.background = p.hand ? "#22c55e" : "#f59e0b";
             btn.innerText = p.hand ? "✋ הורד יד" : "✋ הרם יד";
-            document.getElementById('local-hand-icon').innerHTML = p.hand ? " ✋" : "";
             updateParticipantsUI();
 
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'hand-raise', raised: p.hand });
             }
-            if (p.hand) showToast("✋ הרמת יד בהצלחה למורה");
         }
 
         function muteEveryone() {
@@ -851,7 +855,6 @@
             btn.style.background = audioTrack.enabled ? "#3b82f6" : "#ef4444";
             participantsData['local'].mic = audioTrack.enabled;
             updateParticipantsUI();
-            broadcastStatus();
         }
 
         function toggleCamera() {
@@ -859,17 +862,8 @@
             videoTrack.enabled = !videoTrack.enabled;
             const btn = document.getElementById('cam-btn');
             btn.innerText = videoTrack.enabled ? "📹 לכבות מצלמה" : "📹 הדלק מצלמה";
-            btn.style.background = videoTrack.enabled ? "#3b82f6" : "#ef4444";
             participantsData['local'].cam = videoTrack.enabled;
             updateParticipantsUI();
-            broadcastStatus();
-        }
-
-        function broadcastStatus() {
-            let p = participantsData['local'];
-            for (let peerId in connections) {
-                connections[peerId].send({ type: 'status-update', mic: p.mic, cam: p.cam });
-            }
         }
 
         // --- לוח לבן ומצגות PDF ---
@@ -884,9 +878,7 @@
             whiteboardContainer.style.display = whiteboardContainer.style.display === 'none' ? 'block' : 'none';
         }
 
-        function setEraser() {
-            document.getElementById('wb-color').value = '#ffffff';
-        }
+        function setEraser() { document.getElementById('wb-color').value = '#ffffff'; }
 
         function loadPDF(e) {
             const file = e.target.files[0];
@@ -917,33 +909,25 @@
                 canvas.width = viewport.width;
 
                 const renderContext = { canvasContext: ctx, viewport: viewport };
-                const renderTask = page.render(renderContext);
-                renderTask.promise.then(() => {
+                page.render(renderContext).promise.then(() => {
                     pageRendering = false;
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
+                    if (pageNumPending !== null) { renderPage(pageNumPending); pageNumPending = null; }
                 });
                 document.getElementById('pdf-page-num').innerText = num;
             });
         }
 
-        function queueRenderPage(num) {
-            if (pageRendering) { pageNumPending = num; } else { renderPage(num); }
-        }
-
         function prevPdfPage() {
             if (pageNum <= 1) return;
             pageNum--;
-            queueRenderPage(pageNum);
+            renderPage(pageNum);
             broadcastPdfPage(pageNum, currentPdfDataUrl);
         }
 
         function nextPdfPage() {
             if (pageNum >= pdfDoc.numPages) return;
             pageNum++;
-            queueRenderPage(pageNum);
+            renderPage(pageNum);
             broadcastPdfPage(pageNum, currentPdfDataUrl);
         }
 
@@ -995,17 +979,10 @@
 
         function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-        // --- צ'אט וקבצים ---
+        // --- צ'אט ---
         function saveAndAppendMessage(sender, text) {
             let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
-            history.push({ type: 'text', sender, text });
-            localStorage.setItem('chat_history', JSON.stringify(history));
-            renderChatHistory();
-        }
-
-        function saveAndAppendFile(sender, fileName, fileData) {
-            let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
-            history.push({ type: 'file', sender, fileName, fileData });
+            history.push({ sender, text });
             localStorage.setItem('chat_history', JSON.stringify(history));
             renderChatHistory();
         }
@@ -1014,13 +991,7 @@
 
         function renderChatHistory() {
             let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
-            chatMessages.innerHTML = history.map(item => {
-                if (item.type === 'text') {
-                    return `<div><b>${item.sender}:</b> ${item.text}</div>`;
-                } else {
-                    return `<div><b>${item.sender}:</b> צרף קובץ:<br><a href="${item.fileData}" download="${item.fileName}" style="color: #60a5fa; text-decoration: underline;">📄 ${item.fileName}</a></div>`;
-                }
-            }).join('');
+            chatMessages.innerHTML = history.map(item => `<div><b>${item.sender}:</b> ${item.text}</div>`).join('');
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
@@ -1037,20 +1008,6 @@
 
         function handleChatKey(e) { if (e.key === 'Enter') sendChatMessage(); }
 
-        function sendFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const fileData = e.target.result;
-                saveAndAppendFile("אני", file.name, fileData);
-                for (let peerId in connections) {
-                    connections[peerId].send({ type: 'file', name: myName, fileName: file.name, fileData: fileData });
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
         function toggleRecording() {
             const btn = document.getElementById('record-btn');
             if (!mediaRecorder || mediaRecorder.state === "inactive") {
@@ -1065,13 +1022,12 @@
                         a.href = url;
                         a.download = 'class-recording.webm';
                         a.click();
-                        showToast("💾 הקלטת השיעור נשמרה!");
+                        showToast("💾 ההקלטה נשמרה");
                     };
                     mediaRecorder.start();
                     btn.innerText = "⏹️ עצור הקלטה";
                     btn.className = "danger";
-                    showToast("⏺️ ההקלטה החלה...");
-                }).catch(err => alert("הקלטת המסך בוטלה: " + err.message));
+                });
             } else {
                 mediaRecorder.stop();
                 btn.innerText = "⏺️ הקלט";
@@ -1095,9 +1051,8 @@
                         if (sender) sender.replaceTrack(myStream.getVideoTracks()[0]);
                     }
                     localVideo.srcObject = myStream;
-                    showToast("🖥️ שיתוף המסך הסתיים");
                 };
-            }).catch(err => console.log("שיתוף מסך בוטל", err));
+            });
         }
 
         function showToast(message) {
