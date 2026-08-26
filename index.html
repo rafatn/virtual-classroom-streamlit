@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - מחולל גרפים, ניתוח ופיצ'רים מתקדמים</title>
+    <title>כיתה וירטואלית אולטימטיבית - עם מיקום גיאוגרפי, תלת-מימד וגרפים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -535,7 +535,7 @@
 
     <div class="container">
         <header class="app-header">
-            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם תלת-מימד, מחולל גרפים ופיצ'רים חדשים)</h2>
+            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם מיקום IP, תלת-מימד וגרפים)</h2>
             <button onclick="toggleTheme()" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); font-size: 0.85rem; padding: 6px 12px;">🌓 מצב תצוגה</button>
         </header>
 
@@ -671,7 +671,7 @@
 
             <!-- פאנלים בצד -->
             <div class="sidebar-panels">
-                <!-- כלי הוראה עם שעון עצר חדש -->
+                <!-- כלי הוראה עם שעון עצר -->
                 <div class="panel-box">
                     <h3>⏱️ כלי הוראה חכמים</h3>
                     <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem;">
@@ -714,7 +714,7 @@
                     <textarea id="personal-notes" placeholder="רשום לעצמך הערות לשיעור כאן..." style="width: 100%; height: 90px; resize: none; font-size: 0.85rem; margin: 0; padding: 8px;" oninput="savePersonalNotes()"></textarea>
                 </div>
 
-                <!-- מסמך סיכום משותף חדש -->
+                <!-- מסמך סיכום משותף -->
                 <div class="panel-box">
                     <h3>
                         <span>📑 סיכום שיתופי</span>
@@ -729,7 +729,7 @@
                     <ul class="list-container" id="waiting-list"></ul>
                 </div>
 
-                <!-- משתתפים -->
+                <!-- משתתפים (כולל אזור גיאוגרפי) -->
                 <div class="panel-box">
                     <h3>
                         <span>👥 משתתפים (<span id="participant-count">1</span>)</span>
@@ -744,7 +744,7 @@
                     <div id="poll-content" style="font-size: 0.85rem;"></div>
                 </div>
 
-                <!-- צ'אט עם כפתור ניקוי -->
+                <!-- צ'אט כיתתי -->
                 <div class="panel-box" style="display: flex; flex-direction: column;">
                     <h3>
                         <span>💬 צ'אט כיתתי</span>
@@ -764,6 +764,7 @@
         let peer;
         let myStream;
         let myName = "";
+        let myLocation = "מזהה מיקום...";
         let connections = {}; 
         let activeCalls = {}; 
         let mediaRecorder;
@@ -779,7 +780,6 @@
         let timerInterval = null;
         let timeLeft = 0;
 
-        // משתני שעון עצר (Stopwatch) חדש
         let stopwatchInterval = null;
         let stopwatchSeconds = 0;
         let isStopwatchRunning = false;
@@ -819,9 +819,30 @@
             body.getAttribute("data-theme") === "dark" ? body.setAttribute("data-theme", "light") : body.setAttribute("data-theme", "dark");
         }
 
+        // שליפת מיקום גיאוגרפי אוטומטי לפי IP
+        async function fetchMyLocation() {
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                if (data && data.city && data.country_name) {
+                    myLocation = `${data.city}, ${data.country_name}`;
+                } else {
+                    myLocation = "מיקום לא ידוע";
+                }
+            } catch (e) {
+                myLocation = "רשת מקומית";
+            }
+            if (participantsData['local']) {
+                participantsData['local'].location = myLocation;
+                updateParticipantsUI();
+            }
+        }
+
         function startApp() {
             myName = document.getElementById('my-name').value.trim();
             if (!myName) { alert("נא להזין שם מלא"); return; }
+
+            fetchMyLocation();
 
             getMediaStreamWithQuality('sd').then(stream => {
                 myStream = stream;
@@ -832,7 +853,7 @@
                 document.getElementById('local-name-text').style.color = localColor;
                 document.getElementById('local-video-label').style.borderColor = localColor;
 
-                participantsData['local'] = { name: myName, mic: true, cam: true, hand: false, color: localColor };
+                participantsData['local'] = { name: myName, location: myLocation, mic: true, cam: true, hand: false, color: localColor };
                 updateParticipantsUI();
                 initAudioActivityDetector(stream, 'local-video-box');
 
@@ -870,7 +891,6 @@
             } catch (e) {}
         }
 
-        // --- לוגיקת שעון עצר (Stopwatch) חדש ---
         function toggleStopwatch() {
             const btn = document.getElementById('sw-toggle-btn');
             if (!isStopwatchRunning) {
@@ -907,7 +927,6 @@
                 `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // --- לוגיקת מסמך שיתופי חדש ---
         function syncSharedDoc() {
             const text = document.getElementById('shared-doc-area').value;
             for (let peerId in connections) {
@@ -931,7 +950,6 @@
             }
         }
 
-        // --- ניהול מחולל גרפים מתקדם ---
         function toggleGraphSpace() {
             const container = document.getElementById('graph-container');
             const isVisible = container.style.display === 'block';
@@ -1063,7 +1081,6 @@
             plotCustomGraph();
         }
 
-        // --- ניהול מרחב תלת מימד (Three.js) ---
         function toggle3DSpace() {
             const container = document.getElementById('threed-container');
             const isVisible = container.style.display === 'block';
@@ -1257,6 +1274,12 @@
                         showToast(`⏳ ${data.name} ממתין בכניסה`);
                     } else if (data.type === 'shared-doc') {
                         document.getElementById('shared-doc-area').value = data.text;
+                    } else if (data.type === 'user-info') {
+                        if (participantsData[conn.peer]) {
+                            participantsData[conn.peer].name = data.name;
+                            participantsData[conn.peer].location = data.location || "לא ידוע";
+                            updateParticipantsUI();
+                        }
                     } else {
                         handleIncomingData(conn, data);
                     }
@@ -1268,7 +1291,9 @@
                 call.on('stream', (remoteStream) => {
                     const remoteName = call.metadata ? call.metadata.name : "משתתף";
                     const remoteColor = getUserColor(call.peer);
-                    participantsData[call.peer] = { name: remoteName, mic: true, cam: true, hand: false, color: remoteColor };
+                    if (!participantsData[call.peer]) {
+                        participantsData[call.peer] = { name: remoteName, location: "מזהה...", mic: true, cam: true, hand: false, color: remoteColor };
+                    }
                     addVideoStream(call.peer, remoteStream, remoteName, remoteColor);
                     updateParticipantsUI();
                     initAudioActivityDetector(remoteStream, 'video-' + call.peer);
@@ -1289,7 +1314,7 @@
 
             conn.on('open', () => { 
                 conn.send({ type: 'join-request', name: myName }); 
-                conn.send({ type: 'user-info', name: myName });
+                conn.send({ type: 'user-info', name: myName, location: myLocation });
             });
 
             conn.on('data', (data) => {
@@ -1301,7 +1326,7 @@
                     const call = peer.call(targetId, myStream, { metadata: { name: myName } });
                     call.on('stream', (remoteStream) => {
                         const hostColor = getUserColor(targetId);
-                        participantsData[targetId] = { name: "מארח החדר", mic: true, cam: true, hand: false, color: hostColor };
+                        participantsData[targetId] = { name: "מארח החדר", location: "לא ידוע", mic: true, cam: true, hand: false, color: hostColor };
                         addVideoStream(targetId, remoteStream, "מארח החדר", hostColor);
                         updateParticipantsUI();
                         initAudioActivityDetector(remoteStream, 'video-' + targetId);
@@ -1335,7 +1360,7 @@
             if (waitingQueue[peerId]) {
                 let conn = waitingQueue[peerId].conn;
                 conn.send({ type: 'admitted', teacherId: peer.id });
-                conn.send({ type: 'user-info', name: myName });
+                conn.send({ type: 'user-info', name: myName, location: myLocation });
                 connections[peerId] = conn;
                 setupDataConnection(conn);
                 delete waitingQueue[peerId];
@@ -1364,7 +1389,13 @@
             else if (data.type === 'transcript') { fullTranscriptText += `${data.text}\n`; updateTranscriptBox(fullTranscriptText); }
             else if (data.type === 'timer-sync') { timeLeft = data.time; updateTimerDisplay(); }
             else if (data.type === 'hand-raise') { if (participantsData[conn.peer]) { participantsData[conn.peer].hand = data.raised; updateParticipantsUI(); } }
-            else if (data.type === 'user-info') { if (participantsData[conn.peer]) { participantsData[conn.peer].name = data.name; updateParticipantsUI(); } }
+            else if (data.type === 'user-info') { 
+                if (participantsData[conn.peer]) { 
+                    participantsData[conn.peer].name = data.name; 
+                    participantsData[conn.peer].location = data.location || "לא ידוע"; 
+                    updateParticipantsUI(); 
+                } 
+            }
             else if (data.type === 'new-poll') { currentPoll = data.poll; renderPoll(); }
             else if (data.type === 'poll-vote') { if (currentPoll) { currentPoll.votes[data.optionIndex]++; renderPoll(); } }
             else if (data.type === 'draw') drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false);
@@ -1406,7 +1437,8 @@
                 count++;
                 let p = participantsData[id];
                 let micIcon = p.mic ? "🎤" : "🔇", camIcon = p.cam ? "📹" : "📷❌", handIcon = p.hand ? " ✋" : "";
-                html += `<li><span style="color:${p.color}; font-weight:700;">${p.name}${handIcon}</span> <span style="display:flex; gap:6px;">${micIcon} ${camIcon}</span></li>`;
+                let locText = p.location ? ` <span style="font-size:0.75rem; color:var(--text-muted);">(${p.location})</span>` : "";
+                html += `<li><span style="color:${p.color}; font-weight:700;">${p.name}${handIcon}${locText}</span> <span style="display:flex; gap:6px;">${micIcon} ${camIcon}</span></li>`;
             }
             listEl.innerHTML = html;
             document.getElementById('participant-count').innerText = count;
