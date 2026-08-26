@@ -838,6 +838,7 @@
         let myName = "";
         let myLocation = "מזהה מיקום...";
         let myCoords = [31.0461, 34.8516]; // ברירת מחדל ישראל
+        let mySystemInfo = { browser: "Unknown", os: "Unknown" };
         let connections = {}; 
         let activeCalls = {}; 
         let mediaRecorder;
@@ -889,6 +890,28 @@
         const videoGrid = document.getElementById('video-grid');
         const localVideo = document.getElementById('local-video');
         const chatMessages = document.getElementById('chat-messages');
+
+        // פונקציה לזיהוי מערכת הפעלה ודפדפן
+        function getClientSystemInfo() {
+            const ua = navigator.userAgent;
+            let browser = "דפדפן לא ידוע";
+            let os = "מערכת הפעלה לא ידועה";
+
+            if (ua.indexOf("Firefox") > -1) browser = "Firefox";
+            else if (ua.indexOf("SamsungBrowser") > -1) browser = "Samsung Internet";
+            else if (ua.indexOf("Opera") > -1 || ua.indexOf("OPR") > -1) browser = "Opera";
+            else if (ua.indexOf("Edge") > -1) browser = "Edge";
+            else if (ua.indexOf("Chrome") > -1) browser = "Chrome";
+            else if (ua.indexOf("Safari") > -1) browser = "Safari";
+
+            if (ua.indexOf("Win") > -1) os = "Windows";
+            else if (ua.indexOf("Mac") > -1) os = "macOS";
+            else if (ua.indexOf("Linux") > -1) os = "Linux";
+            else if (ua.indexOf("Android") > -1) os = "Android";
+            else if (ua.indexOf("like Mac") > -1) os = "iOS";
+
+            return { browser, os };
+        }
 
         function toggleTheme() {
             const body = document.body;
@@ -949,7 +972,7 @@
                 let p = participantsData[id];
                 let coords = p.coords || [31.0461, 34.8516];
                 let marker = L.marker(coords).addTo(leafletMap)
-                    .bindPopup(`<b>${p.name}</b><br>${p.location || 'מיקום לא ידוע'}`);
+                    .bindPopup(`<b>${p.name}</b><br>${p.location || 'מיקום לא ידוע'}<br>💻 מערכת: ${p.sysInfo?.os || 'לא ידוע'} | ${p.sysInfo?.browser || 'לא ידוע'}`);
                 mapMarkers[id] = marker;
             }
         }
@@ -1014,6 +1037,8 @@
             myName = document.getElementById('my-name').value.trim();
             if (!myName) { alert("נא להזין שם מלא"); return; }
 
+            mySystemInfo = getClientSystemInfo();
+
             fetchMyLocation().then(() => {
                 if (leafletMap) updateMapMarkers();
             });
@@ -1027,7 +1052,7 @@
                 document.getElementById('local-name-text').style.color = localColor;
                 document.getElementById('local-video-label').style.borderColor = localColor;
 
-                participantsData['local'] = { name: myName, location: myLocation, coords: myCoords, mic: true, cam: true, hand: false, color: localColor };
+                participantsData['local'] = { name: myName, location: myLocation, coords: myCoords, sysInfo: mySystemInfo, mic: true, cam: true, hand: false, color: localColor };
                 updateParticipantsUI();
                 initAudioActivityDetector(stream, 'local-video-box');
 
@@ -1409,6 +1434,7 @@
                             participantsData[conn.peer].name = data.name;
                             participantsData[conn.peer].location = data.location || "לא ידוע";
                             participantsData[conn.peer].coords = data.coords || [31.0461, 34.8516];
+                            participantsData[conn.peer].sysInfo = data.sysInfo || { browser: "לא ידוע", os: "לא ידוע" };
                             updateParticipantsUI();
                             updateMapMarkers();
                         }
@@ -1427,7 +1453,7 @@
                     const remoteName = call.metadata ? call.metadata.name : "משתתף";
                     const remoteColor = getUserColor(call.peer);
                     if (!participantsData[call.peer]) {
-                        participantsData[call.peer] = { name: remoteName, location: "מזהה...", coords: [31.0461, 34.8516], mic: true, cam: true, hand: false, color: remoteColor };
+                        participantsData[call.peer] = { name: remoteName, location: "מזהה...", coords: [31.0461, 34.8516], sysInfo: { browser: "לא ידוע", os: "לא ידוע" }, mic: true, cam: true, hand: false, color: remoteColor };
                     }
                     addVideoStream(call.peer, remoteStream, remoteName, remoteColor);
                     updateParticipantsUI();
@@ -1449,7 +1475,7 @@
 
             conn.on('open', () => { 
                 conn.send({ type: 'join-request', name: myName }); 
-                conn.send({ type: 'user-info', name: myName, location: myLocation, coords: myCoords });
+                conn.send({ type: 'user-info', name: myName, location: myLocation, coords: myCoords, sysInfo: mySystemInfo });
             });
 
             conn.on('data', (data) => {
@@ -1461,7 +1487,7 @@
                     const call = peer.call(targetId, myStream, { metadata: { name: myName } });
                     call.on('stream', (remoteStream) => {
                         const hostColor = getUserColor(targetId);
-                        participantsData[targetId] = { name: "מארח החדר", location: "לא ידוע", coords: [31.0461, 34.8516], mic: true, cam: true, hand: false, color: hostColor };
+                        participantsData[targetId] = { name: "מארח החדר", location: "לא ידוע", coords: [31.0461, 34.8516], sysInfo: { browser: "לא ידוע", os: "לא ידוע" }, mic: true, cam: true, hand: false, color: hostColor };
                         addVideoStream(targetId, remoteStream, "מארח החדר", hostColor);
                         updateParticipantsUI();
                         initAudioActivityDetector(remoteStream, 'video-' + targetId);
@@ -1495,7 +1521,7 @@
             if (waitingQueue[peerId]) {
                 let conn = waitingQueue[peerId].conn;
                 conn.send({ type: 'admitted', teacherId: peer.id });
-                conn.send({ type: 'user-info', name: myName, location: myLocation, coords: myCoords });
+                conn.send({ type: 'user-info', name: myName, location: myLocation, coords: myCoords, sysInfo: mySystemInfo });
                 connections[peerId] = conn;
                 setupDataConnection(conn);
                 delete waitingQueue[peerId];
@@ -1529,6 +1555,7 @@
                     participantsData[conn.peer].name = data.name; 
                     participantsData[conn.peer].location = data.location || "לא ידוע"; 
                     participantsData[conn.peer].coords = data.coords || [31.0461, 34.8516];
+                    participantsData[conn.peer].sysInfo = data.sysInfo || { browser: "לא ידוע", os: "לא ידוע" };
                     updateParticipantsUI();
                     updateMapMarkers();
                 } 
@@ -1577,7 +1604,8 @@
                 let p = participantsData[id];
                 let micIcon = p.mic ? "🎤" : "🔇", camIcon = p.cam ? "📹" : "📷❌", handIcon = p.hand ? " ✋" : "";
                 let locText = p.location ? ` <span style="font-size:0.75rem; color:var(--text-muted);">(${p.location})</span>` : "";
-                html += `<li><span style="color:${p.color}; font-weight:700;">${p.name}${handIcon}${locText}</span> <span style="display:flex; gap:6px;">${micIcon} ${camIcon}</span></li>`;
+                let sysText = p.sysInfo ? ` <span style="font-size:0.7rem; color:#38bdf8;">[💻 ${p.sysInfo.os} / ${p.sysInfo.browser}]</span>` : "";
+                html += `<li><span style="color:${p.color}; font-weight:700;">${p.name}${handIcon}${locText}${sysText}</span> <span style="display:flex; gap:6px;">${micIcon} ${camIcon}</span></li>`;
             }
             listEl.innerHTML = html;
             document.getElementById('participant-count').innerText = count;
