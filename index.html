@@ -1,21 +1,173 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>מערכת שיעור וידאו ישיר - WebRTC</title>
+    <!-- טעינת ספרית PeerJS לניהול חיבורי P2P וידאו -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        .card {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 12px;
+            margin: 10px 5px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #2c2c2c;
+            color: white;
+            font-size: 1rem;
+        }
+        button {
+            background: #28a745;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover { background: #218838; }
+        .video-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        video {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #333;
+        }
+        .room-info {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 1.1rem;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
 
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <script src='https://8x8.vc/vpaas-magic-cookie-67213335fe8f4e77b78b22f34df07f54/external_api.js' async></script>
-        <style>html, body, #jaas-container { height: 100%; }</style>
-        <script type="text/javascript">
-          window.onload = () => {
-            const api = new JitsiMeetExternalAPI("8x8.vc", {
-              roomName: "vpaas-magic-cookie-67213335fe8f4e77b78b22f34df07f54/SampleAppReadyHorsesSailLeft",
-              parentNode: document.querySelector('#jaas-container'),
-							// Make sure to include a JWT if you intend to record,
-							// make outbound calls or use any other premium features!
-							// jwt: "eyJraWQiOiJ2cGFhcy1tYWdpYy1jb29raWUtNjcyMTMzMzVmZThmNGU3N2I3OGIyMmYzNGRmMDdmNTQvNzJiOWQ1LVNBTVBMRV9BUFAiLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJqaXRzaSIsImlzcyI6ImNoYXQiLCJpYXQiOjE3ODc3NTEzOTQsImV4cCI6MTc4Nzc1ODU5NCwibmJmIjoxNzg3NzUxMzg5LCJzdWIiOiJ2cGFhcy1tYWdpYy1jb29raWUtNjcyMTMzMzVmZThmNGU3N2I3OGIyMmYzNGRmMDdmNTQiLCJjb250ZXh0Ijp7ImZlYXR1cmVzIjp7ImxpdmVzdHJlYW1pbmciOmZhbHNlLCJmaWxlLXVwbG9hZCI6ZmFsc2UsIm91dGJvdW5kLWNhbGwiOmZhbHNlLCJzaXAtb3V0Ym91bmQtY2FsbCI6ZmFsc2UsInRyYW5zY3JpcHRpb24iOmZhbHNlLCJsaXN0LXZpc2l0b3JzIjpmYWxzZSwicmVjb3JkaW5nIjpmYWxzZSwiZmxpcCI6ZmFsc2V9LCJ1c2VyIjp7ImhpZGRlbi1mcm9tLXJlY29yZGVyIjpmYWxzZSwibW9kZXJhdG9yIjp0cnVlLCJuYW1lIjoiVGVzdCBVc2VyIiwiaWQiOiJnb29nbGUtb2F1dGgyfDEwNzY1MDg5ODU0OTczNzgyMDE1NyIsImF2YXRhciI6IiIsImVtYWlsIjoidGVzdC51c2VyQGNvbXBhbnkuY29tIn19LCJyb29tIjoiKiJ9.MuhQ77sYI3B-EH5REskLVE_1R9F9RvWkrYmvoLe3-I6b5-ocq7MrAfVpVnmTmYBBTzmvTiPHEyZWU33CXgwdUZH7Cowdkhk4vZsafQ9nvRmDWZv_chqdDeSu784opavjk4y7_GDAmNZmGp1zqrsSnao2OwzUOGjHX7dJLz8HwFRMuJsV_6kmymVrIGv_5g1EVNRXSNwZNQe114lDnYswYcIbIfyyixVWeG87PGRxZCD3IbCnV6VRr3tSv7hEnczooMv4LWNCzs0JQvlPnEZBgc5ew0FgCEmceC3HLWR0QsUdrgDVBkxuZ2PnZ4FmGbIZyOALwLdQ3A6fCFcXoJ_mDg"
+    <div class="container">
+        <h2>🎓 שיעור וידאו חי ישיר (P2P)</h2>
+
+        <!-- מסך התחברות / יצירת חדר -->
+        <div class="card" id="setup-card">
+            <div>
+                <h3>יצירת חדר חדש (למורה):</h3>
+                <button onclick="createRoom()">צור חדר והפעל מצלמה</button>
+            </div>
+            <hr style="border-color: #444; margin: 20px 0;">
+            <div>
+                <h3>הצטרפות לחדר קיים (לתלמיד):</h3>
+                <input type="text" id="room-id-input" placeholder="הכנס את קוד החדר של המורה">
+                <button onclick="joinRoom()">התחבר לחדר</button>
+            </div>
+        </div>
+
+        <div id="room-display" class="room-info" style="display: none;"></div>
+
+        <!-- אזור הווידאו -->
+        <div class="video-grid">
+            <div>
+                <p>המצלמה שלי</p>
+                <video id="local-video" autoplay muted playsinline></video>
+            </div>
+            <div>
+                <p>המשתתף השני</p>
+                <video id="remote-video" autoplay playsinline></video>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let peer;
+        let localStream;
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+
+        // הפעלת מצלמה מקומית מראש
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                localStream = stream;
+                localVideo.srcObject = stream;
+            })
+            .catch(err => {
+                alert("שגיאה בגישה למצלמה או למיקרופון: " + err.message);
             });
-          }
-        </script>
-      </head>
-      <body><div id="jaas-container" /></body>
-    </html>
-  
+
+        // יצירת חדר (מורה)
+        function createRoom() {
+            // יצירת מזהה אקראי ייחודי לחדר
+            peer = new Peer();
+
+            peer.on('open', (id) => {
+                document.getElementById('setup-card').style.display = 'none';
+                const display = document.getElementById('room-display');
+                display.style.display = 'block';
+                display.innerHTML = `קוד החדר שלך להעברה לתלמידים: <b>${id}</b>`;
+            });
+
+            // האזנה לקריאות נכנסות מהתלמיד
+            peer.on('call', (call) => {
+                call.answer(localStream); // מענה ושליחת הוידאו שלנו לתלמיד
+                call.on('stream', (remoteStream) => {
+                    remoteVideo.srcObject = remoteStream; // הצגת הוידאו של התלמיד
+                });
+            });
+        }
+
+        // הצטרפות לחדר (תלמיד)
+        function joinRoom() {
+            const roomId = document.getElementById('room-id-input').value.trim();
+            if (!roomId) {
+                alert("נא להזין קוד חדר תקין");
+                return;
+            }
+
+            peer = new Peer();
+
+            peer.on('open', () => {
+                document.getElementById('setup-card').style.display = 'none';
+                const display = document.getElementById('room-display');
+                display.style.display = 'block';
+                display.innerHTML = `מתחבר לחדר: ${roomId}...`;
+
+                // חיוג למורה לפי קוד החדר
+                const call = peer.call(roomId, localStream);
+                
+                call.on('stream', (remoteStream) => {
+                    remoteVideo.srcObject = remoteStream; // הצגת הוידאו של המורה
+                    display.innerHTML = `✅ מחובר לשיעור בהצלחה!`;
+                });
+
+                call.on('error', (err) => {
+                    alert("שגיאה בחיבור לחדר: " + err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
