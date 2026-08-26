@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - עם תלת מימד וגרפים</title>
+    <title>כיתה וירטואלית אולטימטיבית - מחולל גרפים חופשי</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -640,17 +640,12 @@
                     <div id="threed-canvas-box"></div>
                 </div>
 
-                <!-- מחולל גרפים מתמטיים שיתופי (Chart.js) -->
+                <!-- מחולל גרפים מתמטיים שיתופי חופשי (Chart.js) -->
                 <div id="graph-container">
                     <div class="whiteboard-toolbar">
-                        <span style="font-weight: bold; color: var(--text-main); font-size: 0.9rem;">פונקציה:</span>
-                        <select id="math-func-type" style="padding: 6px 12px; font-size: 0.85rem; margin: 0;">
-                            <option value="quadratic">פרבולה: x²</option>
-                            <option value="cubic">פולינום מעלה 3: x³ - 3x</option>
-                            <option value="sine">סינוס: sin(x)</option>
-                            <option value="exponential">מעריכי: 2ˣ</option>
-                        </select>
-                        <button onclick="plotGraph()" style="padding: 6px 14px; font-size: 0.85rem; background: var(--success); margin: 0;">הצג וסנכרן גרף</button>
+                        <span style="font-weight: bold; color: var(--text-main); font-size: 0.9rem;">f(x) =</span>
+                        <input type="text" id="math-func-input" value="x * x" placeholder="למשל: x * x או Math.sin(x)" style="width: 250px; margin: 0; padding: 6px 12px; font-size: 0.85rem;" dir="ltr">
+                        <button onclick="plotCustomGraph()" style="padding: 6px 14px; font-size: 0.85rem; background: var(--success); margin: 0;">שרטט וסנכרן</button>
                     </div>
                     <div id="graph-canvas-box">
                         <canvas id="mathChart"></canvas>
@@ -843,26 +838,26 @@
             } catch (e) {}
         }
 
-        // --- ניהול גרפים מתמטיים (Chart.js) ---
+        // --- ניהול גרפים מתמטיים חופשיים (Chart.js) ---
         function toggleGraphSpace() {
             const container = document.getElementById('graph-container');
             const isVisible = container.style.display === 'block';
             container.style.display = isVisible ? 'none' : 'block';
             if (!isVisible && !isGraphInitialized) {
-                initGraphChart('quadratic');
+                initGraphChart("x * x");
             }
         }
 
-        function initGraphChart(funcType) {
+        function initGraphChart(funcExpr) {
             const ctx = document.getElementById('mathChart').getContext('2d');
-            const dataPoints = generateFunctionData(funcType);
+            const dataPoints = generateCustomFunctionData(funcExpr);
 
             mathChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: dataPoints.labels,
                     datasets: [{
-                        label: dataPoints.title,
+                        label: "f(x) = " + funcExpr,
                         data: dataPoints.values,
                         borderColor: '#6366f1',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
@@ -883,51 +878,54 @@
             isGraphInitialized = true;
         }
 
-        function generateFunctionData(type) {
+        function generateCustomFunctionData(expr) {
             let labels = [];
             let values = [];
-            let title = "";
+            let func;
+
+            try {
+                // יצירת פונקציה מאובטחת מקלט המשתמש
+                func = new Function('x', 'return ' + expr + ';');
+            } catch (e) {
+                func = (x) => 0;
+            }
 
             for (let x = -10; x <= 10; x += 0.5) {
                 labels.push(x.toFixed(1));
                 let y = 0;
-                if (type === 'quadratic') {
-                    y = x * x;
-                    title = "f(x) = x²";
-                } else if (type === 'cubic') {
-                    y = (x * x * x) - (3 * x);
-                    title = "f(x) = x³ - 3x";
-                } else if (type === 'sine') {
-                    y = Math.sin(x) * 5;
-                    title = "f(x) = 5·sin(x)";
-                } else if (type === 'exponential') {
-                    y = Math.pow(2, x);
-                    title = "f(x) = 2ˣ";
+                try {
+                    y = func(x);
+                    if (isNaN(y) || !isFinite(y)) y = null;
+                } catch (err) {
+                    y = 0;
                 }
                 values.push(y);
             }
-            return { labels, values, title };
+            return { labels, values };
         }
 
-        function plotGraph() {
-            const funcType = document.getElementById('math-func-type').value;
-            updateGraphData(funcType);
+        function plotCustomGraph() {
+            const expr = document.getElementById('math-func-input').value.trim();
+            if (!expr) return;
+            updateGraphData(expr);
             for (let peerId in connections) {
-                connections[peerId].send({ type: 'math-graph', funcType: funcType });
+                connections[peerId].send({ type: 'math-graph', expr: expr });
             }
-            showToast("📈 גרף הפונקציה עודכן ושודר!");
+            showToast("📈 גרף הפונקציה שורטט וסונכרן!");
         }
 
-        function updateGraphData(funcType) {
+        function updateGraphData(expr) {
             const container = document.getElementById('graph-container');
             container.style.display = 'block';
+            document.getElementById('math-func-input').value = expr;
+
             if (!isGraphInitialized) {
-                initGraphChart(funcType);
+                initGraphChart(expr);
                 return;
             }
-            const dataPoints = generateFunctionData(funcType);
+            const dataPoints = generateCustomFunctionData(expr);
             mathChartInstance.data.labels = dataPoints.labels;
-            mathChartInstance.data.datasets[0].label = dataPoints.title;
+            mathChartInstance.data.datasets[0].label = "f(x) = " + expr;
             mathChartInstance.data.datasets[0].data = dataPoints.values;
             mathChartInstance.update();
         }
@@ -1314,7 +1312,7 @@
                 if (!is3DInitialized) init3DScene();
                 createMeshShape(data.shape);
             } else if (data.type === 'math-graph') {
-                updateGraphData(data.funcType);
+                updateGraphData(data.expr);
             }
         }
 
