@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - עם תלת מימד</title>
+    <title>כיתה וירטואלית אולטימטיבית - עם תלת מימד וגרפים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -12,6 +12,8 @@
     </script>
     <!-- טעינת Three.js לתלת מימד -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- טעינת Chart.js לגרפים -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-base: #060913;
@@ -370,7 +372,7 @@
             max-width: 100%;
         }
 
-        /* עיצוב חלון תלת מימד */
+        /* חלון תלת מימד */
         #threed-container {
             display: none;
             background: var(--bg-surface);
@@ -387,6 +389,26 @@
             border-radius: var(--radius-md);
             overflow: hidden;
             background: #000;
+            position: relative;
+        }
+
+        /* חלון גרפים מתמטיים */
+        #graph-container {
+            display: none;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            text-align: center;
+            box-shadow: var(--shadow-float);
+        }
+
+        #graph-canvas-box {
+            width: 100%;
+            height: 380px;
+            border-radius: var(--radius-md);
+            background: var(--bg-base);
+            padding: 10px;
             position: relative;
         }
 
@@ -515,7 +537,7 @@
 
     <div class="container">
         <header class="app-header">
-            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם תלת-מימד)</h2>
+            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם תלת-מימד וגרפים)</h2>
             <button onclick="toggleTheme()" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); font-size: 0.85rem; padding: 6px 12px;">🌓 מצב תצוגה</button>
         </header>
 
@@ -545,7 +567,7 @@
 
         <!-- אזור השידור והכלים הראשי -->
         <div class="main-layout" id="main-layout">
-            <!-- אזור מרכזי: סרגל, וידאו, לוח, תלת מימד -->
+            <!-- אזור מרכזי -->
             <div class="stage-area">
                 <!-- סרגל בקרה עליון -->
                 <div class="controls-bar">
@@ -556,6 +578,7 @@
                     <button onclick="toggleScreenShare()" style="color: #c084fc;">🖥️ שתף מסך</button>
                     <button onclick="toggleWhiteboard()" style="color: #f43f5e;">🎨 לוח ו-PDF</button>
                     <button onclick="toggle3DSpace()" style="color: #38bdf8;">🌌 מרחב 3D</button>
+                    <button onclick="toggleGraphSpace()" style="color: #f59e0b;">📈 מחולל גרפים</button>
                     <button id="record-btn" class="btn-success" onclick="toggleRecording()">⏺️ הקלט</button>
                     <button onclick="muteEveryone()" class="btn-danger">🔇 השתק כולם</button>
                 </div>
@@ -615,6 +638,23 @@
                         <button onclick="change3DShape('pyramid')" style="padding: 6px 12px; font-size: 0.8rem; background: #475569;">פירמידה</button>
                     </div>
                     <div id="threed-canvas-box"></div>
+                </div>
+
+                <!-- מחולל גרפים מתמטיים שיתופי (Chart.js) -->
+                <div id="graph-container">
+                    <div class="whiteboard-toolbar">
+                        <span style="font-weight: bold; color: var(--text-main); font-size: 0.9rem;">פונקציה:</span>
+                        <select id="math-func-type" style="padding: 6px 12px; font-size: 0.85rem; margin: 0;">
+                            <option value="quadratic">פרבולה: x²</option>
+                            <option value="cubic">פולינום מעלה 3: x³ - 3x</option>
+                            <option value="sine">סינוס: sin(x)</option>
+                            <option value="exponential">מעריכי: 2ˣ</option>
+                        </select>
+                        <button onclick="plotGraph()" style="padding: 6px 14px; font-size: 0.85rem; background: var(--success); margin: 0;">הצג וסנכרן גרף</button>
+                    </div>
+                    <div id="graph-canvas-box">
+                        <canvas id="mathChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -718,6 +758,10 @@
         let scene, camera, renderer, currentMesh;
         let is3DInitialized = false;
 
+        // משתני Chart.js לגרפים
+        let mathChartInstance = null;
+        let isGraphInitialized = false;
+
         const userColors = [
             '#38bdf8', '#f472b6', '#34d399', '#fbbf24', 
             '#c084fc', '#fb7185', '#2dd4bf', '#818cf8'
@@ -797,6 +841,95 @@
                 }
                 checkAudio();
             } catch (e) {}
+        }
+
+        // --- ניהול גרפים מתמטיים (Chart.js) ---
+        function toggleGraphSpace() {
+            const container = document.getElementById('graph-container');
+            const isVisible = container.style.display === 'block';
+            container.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible && !isGraphInitialized) {
+                initGraphChart('quadratic');
+            }
+        }
+
+        function initGraphChart(funcType) {
+            const ctx = document.getElementById('mathChart').getContext('2d');
+            const dataPoints = generateFunctionData(funcType);
+
+            mathChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dataPoints.labels,
+                    datasets: [{
+                        label: dataPoints.title,
+                        data: dataPoints.values,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+            isGraphInitialized = true;
+        }
+
+        function generateFunctionData(type) {
+            let labels = [];
+            let values = [];
+            let title = "";
+
+            for (let x = -10; x <= 10; x += 0.5) {
+                labels.push(x.toFixed(1));
+                let y = 0;
+                if (type === 'quadratic') {
+                    y = x * x;
+                    title = "f(x) = x²";
+                } else if (type === 'cubic') {
+                    y = (x * x * x) - (3 * x);
+                    title = "f(x) = x³ - 3x";
+                } else if (type === 'sine') {
+                    y = Math.sin(x) * 5;
+                    title = "f(x) = 5·sin(x)";
+                } else if (type === 'exponential') {
+                    y = Math.pow(2, x);
+                    title = "f(x) = 2ˣ";
+                }
+                values.push(y);
+            }
+            return { labels, values, title };
+        }
+
+        function plotGraph() {
+            const funcType = document.getElementById('math-func-type').value;
+            updateGraphData(funcType);
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'math-graph', funcType: funcType });
+            }
+            showToast("📈 גרף הפונקציה עודכן ושודר!");
+        }
+
+        function updateGraphData(funcType) {
+            const container = document.getElementById('graph-container');
+            container.style.display = 'block';
+            if (!isGraphInitialized) {
+                initGraphChart(funcType);
+                return;
+            }
+            const dataPoints = generateFunctionData(funcType);
+            mathChartInstance.data.labels = dataPoints.labels;
+            mathChartInstance.data.datasets[0].label = dataPoints.title;
+            mathChartInstance.data.datasets[0].data = dataPoints.values;
+            mathChartInstance.update();
         }
 
         // --- ניהול מרחב תלת מימד (Three.js) ---
@@ -1180,6 +1313,8 @@
                 document.getElementById('threed-container').style.display = 'block';
                 if (!is3DInitialized) init3DScene();
                 createMeshShape(data.shape);
+            } else if (data.type === 'math-graph') {
+                updateGraphData(data.funcType);
             }
         }
 
@@ -1462,7 +1597,6 @@
                 recordedChunks = [];
                 navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(stream => {
                     mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
-                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.data; }; // fallback safety
                     mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
                     mediaRecorder.onstop = () => {
                         const blob = new Blob(recordedChunks, { type: 'video/webm' });
