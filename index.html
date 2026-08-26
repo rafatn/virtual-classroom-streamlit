@@ -975,7 +975,21 @@
                         x: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#94a3b8', maxTicksLimit: 15 } },
                         y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#94a3b8' } }
                     },
-                    plugins: { legend: { labels: { color: '#f8fafc' } } },
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            position: 'top',
+                            labels: { 
+                                color: '#f8fafc',
+                                boxWidth: 20,
+                                padding: 15,
+                                font: {
+                                    size: 13,
+                                    family: 'system-ui'
+                                }
+                            } 
+                        } 
+                    },
                     animation: false
                 }
             });
