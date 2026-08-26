@@ -914,7 +914,7 @@
                     label: `פונקציה ${index + 1}: y = ${expr}`,
                     data: yValues,
                     borderColor: funcColor,
-                    backgroundColor: 'transparent',
+                    backgroundColor: funcColor,
                     borderWidth: 2.5,
                     pointRadius: 0,
                     tension: 0.15
@@ -976,13 +976,23 @@
                         legend: { 
                             display: true,
                             position: 'top',
+                            align: 'start',
                             labels: { 
                                 color: '#f8fafc',
                                 boxWidth: 16,
+                                boxHeight: 16,
                                 padding: 15,
                                 font: {
                                     size: 12,
                                     family: 'system-ui'
+                                },
+                                generateLabels: function(chart) {
+                                    const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                                    const labelsOriginal = original.call(this, chart);
+                                    labelsOriginal.forEach(label => {
+                                        label.fillStyle = label.strokeStyle;
+                                    });
+                                    return labelsOriginal;
                                 }
                             } 
                         } 
