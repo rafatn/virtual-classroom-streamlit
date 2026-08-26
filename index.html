@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>מערכת שיעורים מקוונים</title>
+    <!-- טעינה מעודכנת של LiveKit Client SDK מ-unpkg -->
+    <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <!-- טעינת ספרית JWT -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.8.6/jsrsasign-all-min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: #1e1e1e; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 100%; max-width: 400px; margin-top: 50px; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #444; background: #2c2c2c; color: white; box-sizing: border-box; }
+        button { background: #28a745; font-weight: bold; cursor: pointer; border: none; }
+        button:hover { background: #218838; }
+        #room-screen { display: none; width: 100%; max-width: 1000px; }
+        #video-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; width: 100%; margin-top: 20px; }
+        video { width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px; background: #000; }
+    </style>
+</head>
+<body>
+
+    <!-- מסך התחברות -->
+    <div id="login-screen" class="card">
+        <h2>🎓 כניסה לשיעור</h2>
+        <input type="text" id="username" placeholder="שם מלא">
+        <input type="text" id="room" placeholder="קוד חדר (למשל: math-101)">
+        <select id="role">
+            <option value="student">תלמיד (צפייה והאזנה)</option>
+            <option value="teacher">מורה (שידור מצלמה ומיקרופון)</option>
+        </select>
+        <button onclick="connectToClass()">הכנס לשיעור</button>
+    </div>
+
+    <!-- מסך השידור -->
+    <div id="room-screen">
+        <h2 id="room-title"></h2>
+        <p id="user-status" style="color: #aaa;"></p>
+        <button onclick="location.reload()" style="width: auto; padding: 8px 15px; background: #dc3545;">יציאה מהשיעור</button>
+        <div id="video-container"></div>
+    </div>
+
+    <script>
+        const LIVEKIT_URL = "wss://my-classroom-tvclvnpa.livekit.cloud";
+        const API_KEY = "APIscKjHmwLjik6";
+        const API_SECRET = "a8WsGwiQGE8YjTVg26qd3TUi7eW6ODFMCmypAnGeqxq";
+
+        let room = null;
+
+        function generateToken(roomName, username, isTeacher) {
+            const header = { alg: 'HS256', typ: 'JWT' };
+            const now = Math.floor(Date.now() / 1000);
+            
+            const payload = {
+                iss: API_KEY,
+                sub: username,
+                nbf: now,
+                exp: now + 3600,
+                video: {
+                    room: roomName,
+                    roomJoin: true,
+                    canPublish: isTeacher,
+                    canSubscribe: true,
+                    roomAdmin: isTeacher
+                }
+            };
+
+            return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), API_SECRET);
+        }
+
+        async function connectToClass() {
+            // וידוא שהאובייקט קיים תחת LivekitClient או LiveKit
+            const LK = window.LivekitClient || window.LiveKit;
+            if (!LK) {
+                alert("שגיאה: ספריית LiveKit טרם נטענה. אנא רענן את העמוד ונסה שוב.");
+                return;
+            }
+
+            const username = document.getElementById("username").value.trim();
+            const roomName = document.getElementById("room").value.trim();
+            const role = document.getElementById("role").value;
+
+            if (!username || !roomName) {
+                alert("נא למלא את כל השדות");
+                return;
+            }
+
+            try {
+                const isTeacher = (role === "teacher");
+                const token = generateToken(roomName, username, isTeacher);
+
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("room-screen").style.display = "block";
+                document.getElementById("room-title").innerText = "שיעור: " + roomName;
+                document.getElementById("user-status").innerText = isTeacher ? "מחובר כמורה (משדר)" : "מחובר כתלמיד (צפייה והאזנה)";
+
+                room = new LK.Room();
+                const container = document.getElementById("video-container");
+
+                room.on(LK.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+                    if (track.kind === "video" || track.kind === "audio") {
+                        const element = track.attach();
+                        container.appendChild(element);
+                    }
+                });
+
+                await room.connect(LIVEKIT_URL, token);
+
+                if (isTeacher) {
+                    await room.localParticipant.enableCameraAndMicrophone();
+                    room.localParticipant.trackPublications.forEach((publication) => {
+                        if (publication.track) {
+                            container.appendChild(publication.track.attach());
+                        }
+                    });
+                }
+            } catch (error) {
+                alert("שגיאת התחברות: " + (error.message || error));
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
