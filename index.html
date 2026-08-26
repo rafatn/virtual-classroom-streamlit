@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - מחולל גרפים מתקדם ברמת MATLAB</title>
+    <title>כיתה וירטואלית אולטימטיבית - מחולל גרפים וניתוח מתמטי מתקדם</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -46,7 +46,7 @@
             --text-main: #0f172a;
             --text-muted: #64748b;
             --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
-            --shadow-float: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+            --shadow-float: 0 20px 35px -10px rgba(0, 20, 35, 0.15);
         }
 
         * {
@@ -392,7 +392,7 @@
             position: relative;
         }
 
-        /* חלון גרפים מתמטיים מתקדם ברמת MATLAB */
+        /* חלון גרפים מתמטיים מתקדם */
         #graph-container {
             display: none;
             background: var(--bg-surface);
@@ -537,7 +537,7 @@
 
     <div class="container">
         <header class="app-header">
-            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם תלת-מימד ומחולל גרפים ברמת MATLAB)</h2>
+            <h2>🎓 כיתה וירטואלית אולטימטיבית (עם תלת-מימד ומחולל גרפים מתקדם)</h2>
             <button onclick="toggleTheme()" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); font-size: 0.85rem; padding: 6px 12px;">🌓 מצב תצוגה</button>
         </header>
 
@@ -578,7 +578,7 @@
                     <button onclick="toggleScreenShare()" style="color: #c084fc;">🖥️ שתף מסך</button>
                     <button onclick="toggleWhiteboard()" style="color: #f43f5e;">🎨 לוח ו-PDF</button>
                     <button onclick="toggle3DSpace()" style="color: #38bdf8;">🌌 מרחב 3D</button>
-                    <button onclick="toggleGraphSpace()" style="color: #f59e0b;">📈 מחולל גרפים (MATLAB)</button>
+                    <button onclick="toggleGraphSpace()" style="color: #f59e0b;">📈 מחולל גרפים מתקדם</button>
                     <button id="record-btn" class="btn-success" onclick="toggleRecording()">⏺️ הקלט</button>
                     <button onclick="muteEveryone()" class="btn-danger">🔇 השתק כולם</button>
                 </div>
@@ -640,17 +640,17 @@
                     <div id="threed-canvas-box"></div>
                 </div>
 
-                <!-- מחולל גרפים מתמטיים מתקדם ברמת MATLAB (Chart.js) -->
+                <!-- מחולל גרפים מתמטיים מתקדם (Chart.js) -->
                 <div id="graph-container">
                     <div class="whiteboard-toolbar" style="flex-wrap: wrap; gap: 8px;">
                         <span style="font-weight: bold; color: var(--text-main); font-size: 0.85rem;">פונקציות (מופרדות בפסיק):</span>
                         <input type="text" id="math-func-input" value="Math.sin(x), Math.cos(x)" placeholder="למשל: Math.sin(x), x*x - 4" style="width: 220px; margin: 0; padding: 6px 12px; font-size: 0.85rem;" dir="ltr">
                         
                         <span style="font-weight: bold; color: var(--text-muted); font-size: 0.8rem;">X מינימלי:</span>
-                        <input type="number" id="x-min" value="-1000" style="width: 95px; margin: 0; padding: 4px; font-size: 0.85rem; text-align:center;" dir="ltr">
+                        <input type="number" id="x-min" value="-10" style="width: 95px; margin: 0; padding: 4px; font-size: 0.85rem; text-align:center;" dir="ltr">
                         
                         <span style="font-weight: bold; color: var(--text-muted); font-size: 0.8rem;">X מקסימלי:</span>
-                        <input type="number" id="x-max" value="1000" style="width: 95px; margin: 0; padding: 4px; font-size: 0.85rem; text-align:center;" dir="ltr">
+                        <input type="number" id="x-max" value="10" style="width: 95px; margin: 0; padding: 4px; font-size: 0.85rem; text-align:center;" dir="ltr">
                         
                         <span style="font-weight: bold; color: var(--text-muted); font-size: 0.8rem;">ניתוח:</span>
                         <select id="show-analysis" style="background: var(--bg-base); color: var(--text-main); padding: 4px 8px; font-size: 0.8rem; margin: 0;">
@@ -771,7 +771,7 @@
         let scene, camera, renderer, currentMesh;
         let is3DInitialized = false;
 
-        // משתני Chart.js לגרפים מתקדמים ברמת MATLAB
+        // משתני Chart.js לגרפים מתקדמים
         let mathChartInstance = null;
         let isGraphInitialized = false;
         let lastExportData = null;
@@ -858,7 +858,7 @@
             } catch (e) {}
         }
 
-        // --- ניהול מחולל גרפים מתקדם ברמת MATLAB ---
+        // --- ניהול מחולל גרפים מתקדם ---
         function toggleGraphSpace() {
             const container = document.getElementById('graph-container');
             const isVisible = container.style.display === 'block';
@@ -870,8 +870,8 @@
 
         function plotCustomGraph() {
             const rawExprs = document.getElementById('math-func-input').value.trim();
-            const xMin = parseFloat(document.getElementById('x-min').value) || -1000;
-            const xMax = parseFloat(document.getElementById('x-max').value) || 1000;
+            const xMin = parseFloat(document.getElementById('x-min').value) || -10;
+            const xMax = parseFloat(document.getElementById('x-max').value) || 10;
             const analysisMode = document.getElementById('show-analysis').value === 'yes';
 
             if (!rawExprs) return;
@@ -920,7 +920,8 @@
                     backgroundColor: funcColor,
                     borderWidth: 2.5,
                     pointRadius: 0,
-                    tension: 0.15
+                    tension: 0.15,
+                    spanGaps: false // טיפול חכם באסימפטוטות ונקודות אי-הגדרה
                 });
 
                 // ניתוח מתמטי (שורשים וקיצון לפונקציה הראשונה)
@@ -1033,7 +1034,7 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "matlab_full_analysis_data.csv");
+            link.setAttribute("download", "math_full_analysis_data.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
