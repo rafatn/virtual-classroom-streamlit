@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית חכמה עם התרעות ואינדיקטורים</title>
+    <title>כיתה וירטואלית מתקדמת - פוקוס, השתקת כולם והיסטוריה</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -30,7 +30,7 @@
 
         .container {
             width: 100%;
-            max-width: 1250px;
+            max-width: 1300px;
         }
 
         .card {
@@ -88,6 +88,19 @@
             position: relative;
             border: 2px solid var(--border);
             aspect-ratio: 16/9;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .video-box:hover {
+            border-color: var(--accent);
+        }
+
+        /* מצב פוקוס / Spotlight */
+        .video-box.spotlight {
+            grid-column: 1 / -1;
+            aspect-ratio: 21/9;
+            max-height: 450px;
         }
 
         video {
@@ -171,7 +184,7 @@
             cursor: crosshair;
         }
 
-        /* עיצוב התרעות קופצות (Toast Notifications) */
+        /* התרעות קופצות */
         #toast-container {
             position: fixed;
             top: 20px;
@@ -206,11 +219,10 @@
 </head>
 <body>
 
-    <!-- אזור להתרעות קופצות -->
     <div id="toast-container"></div>
 
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית מתקדמת עם אינדיקטורים והתרעות</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית מתקדמת עם פוקוס ושליטת מורה</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -230,18 +242,19 @@
         <!-- אזור השידור והכלים -->
         <div class="main-layout" id="main-layout">
             <div>
-                <!-- סרגל בקרת שמע, וידאו והקלטה -->
+                <!-- סרגל בקרת שמע, וידאו, הקלטה ושליטת מורה -->
                 <div class="controls-bar">
                     <button id="mic-btn" onclick="toggleMic()">🎤 השתק מיקרופון</button>
                     <button id="cam-btn" onclick="toggleCamera()">📹 לכבות מצלמה</button>
                     <button onclick="toggleScreenShare()" style="background: #8b5cf6;">🖥️ שתף מסך</button>
                     <button onclick="toggleWhiteboard()" style="background: #ec4899;">🎨 לוח לבן</button>
                     <button id="record-btn" class="success" onclick="toggleRecording()">⏺️ התחל הקלטה</button>
+                    <button onclick="muteEveryone()" class="danger" style="background: #b91c1c;">🔇 השתק את כולם (מורה)</button>
                 </div>
 
                 <!-- גריד וידאו -->
                 <div class="video-grid" id="video-grid">
-                    <div class="video-box">
+                    <div class="video-box" onclick="toggleSpotlight(this)">
                         <video id="local-video" autoplay muted playsinline></video>
                         <div class="video-label" id="local-label">
                             <span id="local-name-text">אני</span>
@@ -304,6 +317,7 @@
                     document.getElementById('room-controls').style.display = 'block';
                     document.getElementById('main-layout').style.display = 'grid';
 
+                    loadChatHistory(); // טעינת היסטוריית צ'אט
                     initPeerServer();
                 })
                 .catch(err => alert("שגיאה בגישה למצלמה: " + err.message));
@@ -351,11 +365,21 @@
 
             conn.on('data', (data) => {
                 if (data.type === 'chat') {
-                    appendChatMessage(data.name, data.text);
+                    saveAndAppendMessage(data.name, data.text);
                     showToast(`💬 הודעה חדשה מ-${data.name}`);
                 } else if (data.type === 'file') {
-                    appendFileMessage(data.name, data.fileName, data.fileData, data.fileType);
+                    saveAndAppendFile(data.name, data.fileName, data.fileData);
                     showToast(`📄 קובץ חדש התקבל מ-${data.name}`);
+                } else if (data.type === 'mute-all') {
+                    // פקודת השתקה מהמורה
+                    const audioTrack = myStream.getAudioTracks()[0];
+                    if (audioTrack.enabled) {
+                        audioTrack.enabled = false;
+                        document.getElementById('mic-btn').innerText = "🎤 הפעל מיקרופון";
+                        document.getElementById('mic-btn').style.background = "#ef4444";
+                        updateLocalStatusIcons();
+                        showToast("🔇 המורה הפעיל השתקה גלובלית לכולם");
+                    }
                 } else if (data.type === 'draw') {
                     drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, false);
                 }
@@ -368,6 +392,7 @@
             const box = document.createElement('div');
             box.className = 'video-box';
             box.id = 'video-' + peerId;
+            box.onclick = () => toggleSpotlight(box);
 
             const video = document.createElement('video');
             video.srcObject = stream;
@@ -383,7 +408,25 @@
             videoGrid.appendChild(box);
         }
 
-        // --- בקרת שמע ווידאו אישיים + עדכון אינדיקטורים ---
+        // --- מצב פוקוס / Spotlight ---
+        function toggleSpotlight(boxElement) {
+            // הסרת פוקוס מכל השאר והחלפה על התיבה הנבחרת
+            const isAlreadySpotlight = boxElement.classList.contains('spotlight');
+            document.querySelectorAll('.video-box').forEach(b => b.classList.remove('spotlight'));
+            if (!isAlreadySpotlight) {
+                boxElement.classList.add('spotlight');
+            }
+        }
+
+        // --- השתקת כולם (מורה) ---
+        function muteEveryone() {
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'mute-all' });
+            }
+            showToast("🔇 נשלחה פקודת השתקה לכל המשתתפים בחדר");
+        }
+
+        // --- בקרת שמע ווידאו אישיים ---
         function toggleMic() {
             const audioTrack = myStream.getAudioTracks()[0];
             audioTrack.enabled = !audioTrack.enabled;
@@ -411,23 +454,43 @@
             document.getElementById('local-status-icons').innerText = icons;
         }
 
-        // --- התרעות קופצות (Toast) ---
-        function showToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = `🔔 ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 4000);
+        // --- היסטוריית צ'אט ב-LocalStorage ---
+        function saveAndAppendMessage(sender, text) {
+            let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+            history.push({ type: 'text', sender, text });
+            localStorage.setItem('chat_history', JSON.stringify(history));
+            renderChatHistory();
         }
 
-        // --- ניהול צ'אט וקבצים ---
+        function saveAndAppendFile(sender, fileName, fileData) {
+            let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+            history.push({ type: 'file', sender, fileName, fileData });
+            localStorage.setItem('chat_history', JSON.stringify(history));
+            renderChatHistory();
+        }
+
+        function loadChatHistory() {
+            renderChatHistory();
+        }
+
+        function renderChatHistory() {
+            let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+            chatMessages.innerHTML = history.map(item => {
+                if (item.type === 'text') {
+                    return `<div><b>${item.sender}:</b> ${item.text}</div>`;
+                } else {
+                    return `<div><b>${item.sender}:</b> צרף קובץ:<br><a href="${item.fileData}" download="${item.fileName}" style="color: #60a5fa; text-decoration: underline;">📄 ${item.fileName}</a></div>`;
+                }
+            }).join('');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
         function sendChatMessage() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text) return;
 
-            appendChatMessage("אני", text);
+            saveAndAppendMessage("אני", text);
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'chat', name: myName, text: text });
             }
@@ -436,11 +499,6 @@
 
         function handleChatKey(e) { if (e.key === 'Enter') sendChatMessage(); }
 
-        function appendChatMessage(sender, text) {
-            chatMessages.innerHTML += `<div><b>${sender}:</b> ${text}</div>`;
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
         function sendFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -448,19 +506,13 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const fileData = e.target.result;
-                appendFileMessage("אני", file.name, fileData, file.type);
+                saveAndAppendFile("אני", file.name, fileData);
                 
                 for (let peerId in connections) {
-                    connections[peerId].send({ type: 'file', name: myName, fileName: file.name, fileData: fileData, fileType: file.type });
+                    connections[peerId].send({ type: 'file', name: myName, fileName: file.name, fileData: fileData });
                 }
             };
             reader.readAsDataURL(file);
-        }
-
-        function appendFileMessage(sender, fileName, fileData, fileType) {
-            let content = `<a href="${fileData}" download="${fileName}" style="color: #60a5fa; text-decoration: underline;">📄 ${fileName} (הורד קובץ)</a>`;
-            chatMessages.innerHTML += `<div><b>${sender}:</b> צרף קובץ:<br>${content}</div>`;
-            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         // --- הקלטת שיעור ---
@@ -550,6 +602,15 @@
         }
 
         function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `🔔 ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
     </script>
 </body>
 </html>
