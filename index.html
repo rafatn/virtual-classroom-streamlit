@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - תמלול חי, PDF, חדר המתנה וסקרים</title>
+    <title>כיתה וירטואלית אולטימטיבית - תמלול חי, כתוביות, טיימר והגרלות</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js להצגת קבצי PDF על הלוח -->
@@ -131,6 +131,26 @@
             z-index: 5;
         }
 
+        /* כתוביות על גבי מסך הווידאו */
+        .live-subtitle-overlay {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #38bdf8;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            text-align: center;
+            max-width: 90%;
+            z-index: 10;
+            display: none;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
         .controls-bar {
             display: flex;
             justify-content: center;
@@ -145,12 +165,12 @@
             gap: 15px;
         }
 
-        .participants-panel, .waiting-panel, .bandwidth-panel, .transcript-panel {
+        .participants-panel, .waiting-panel, .bandwidth-panel, .transcript-panel, .tools-widget-panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 15px;
-            max-height: 180px;
+            max-height: 200px;
             overflow-y: auto;
         }
 
@@ -188,7 +208,7 @@
             padding: 15px;
             display: flex;
             flex-direction: column;
-            height: 250px;
+            height: 220px;
         }
 
         .chat-messages {
@@ -266,7 +286,7 @@
     <div id="toast-container"></div>
 
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית עם תמלול קול חי, PDF וסקרים</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית אולטימטיבית (עם תמלול, כתוביות, טיימר והגרלות)</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -309,6 +329,7 @@
                     <div class="video-box" id="local-video-box" onclick="toggleSpotlight(this)">
                         <video id="local-video" autoplay muted playsinline></video>
                         <div class="audio-only-placeholder">🎙️</div>
+                        <div class="live-subtitle-overlay" id="local-subtitle"></div>
                         <div class="video-label" id="local-label">
                             <span id="local-name-text">אני</span>
                             <span id="local-hand-icon"></span>
@@ -345,17 +366,32 @@
 
             <!-- פאנלים בצד -->
             <div class="panels-container">
+                <!-- פאנל כלי הוראה (טיימר והגרלת תלמידים) -->
+                <div class="tools-widget-panel">
+                    <h3 style="margin: 0 0 6px; font-size: 0.95rem; color: #38bdf8;">⏱️ כלי הוראה חכמים</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 6px; border-radius: 6px;">
+                            <span>טיימר שיעור: <b id="timer-display" style="color: #4ade80;">00:00</b></span>
+                            <div style="display: flex; gap: 4px;">
+                                <button onclick="startTimer(300)" style="font-size: 0.7rem; padding: 3px 6px; margin: 0;">5 דק'</button>
+                                <button onclick="stopTimer()" style="font-size: 0.7rem; padding: 3px 6px; background: #ef4444; margin: 0;">איפוס</button>
+                            </div>
+                        </div>
+                        <button onclick="pickRandomStudent()" style="background: #8b5cf6; font-size: 0.85rem; padding: 6px; margin: 0;">🎲 הגרל תלמיד לענות</button>
+                    </div>
+                </div>
+
                 <!-- פאנל תמלול קול חי (Speech-to-Text) -->
                 <div class="transcript-panel">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <h3 style="margin: 0; font-size: 0.95rem; color: #38bdf8;">📝 תמלול קול חי</h3>
+                        <h3 style="margin: 0; font-size: 0.95rem; color: #38bdf8;">📝 תמלול וכתוביות</h3>
                         <div>
                             <button id="stt-btn" onclick="toggleSpeechToText()" style="font-size: 0.7rem; padding: 3px 6px; background: #0ea5e9; margin: 0;">הפעל תמלול</button>
                             <button onclick="downloadTranscript()" style="font-size: 0.7rem; padding: 3px 6px; background: #22c55e; margin: 0;">שמור טקסט</button>
                         </div>
                     </div>
-                    <div id="transcript-box" style="background: #0f172a; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-size: 0.85rem; height: 90px; overflow-y: auto; text-align: right; color: #cbd5e1;">
-                        לחץ על "הפעל תמלול" כדי להפוך דיבור לטקסט בזמן אמת...
+                    <div id="transcript-box" style="background: #0f172a; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-size: 0.85rem; height: 75px; overflow-y: auto; text-align: right; color: #cbd5e1;">
+                        לחץ על "הפעל תמלול" להצגת כתוביות חירום ותיעוד...
                     </div>
                 </div>
 
@@ -426,10 +462,14 @@
         let waitingQueue = {}; 
         let currentPoll = null;
 
-        // משתני תמלול דיבור לטקסט (SpeechRecognition)
+        // משתני תמלול וכתוביות
         let recognition = null;
         let isTranscribing = false;
         let fullTranscriptText = "";
+
+        // משתני טיימר
+        let timerInterval = null;
+        let timeLeft = 0;
 
         // משתני PDF
         let pdfDoc = null;
@@ -463,16 +503,62 @@
             }).catch(err => alert("שגיאה בגישה למצלמה: " + err.message));
         }
 
-        // --- הפיכת קול לטקסט (Speech to Text) ---
-        function initSpeechRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                console.warn("הדפדפן אינו תומך בהמרת דיבור לטקסט מובנית");
-                return;
+        // --- טיימר כיתתי ---
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            timeLeft = seconds;
+            updateTimerDisplay();
+            
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'timer-sync', time: timeLeft });
             }
 
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    showToast("⏰ נגמר הזמן בטיימר!");
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 0;
+            updateTimerDisplay();
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'timer-sync', time: 0 });
+            }
+        }
+
+        function updateTimerDisplay() {
+            let mins = Math.floor(timeLeft / 60);
+            let secs = timeLeft % 60;
+            document.getElementById('timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // --- הגרלת תלמיד אקראית ---
+        function pickRandomStudent() {
+            let names = Object.values(participantsData).map(p => p.name);
+            if (names.length === 0) return;
+            let chosen = names[Math.floor(Math.random() * names.length)];
+            showToast(`🎲 התלמיד שנבחר לענות הוא: ${chosen}! 🌟`);
+            
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'chat', name: "מערכת הגרלה", text: `🎉 הגרלה: ${chosen} נבחר/ה לענות!` });
+            }
+            saveAndAppendMessage("מערכת הגרלה", `🎉 ${chosen} נבחר/ה לענות!`);
+        }
+
+        // --- הפיכת קול לטקסט וכתוביות על המסך ---
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return;
+
             recognition = new SpeechRecognition();
-            recognition.lang = 'he-IL'; // שפה עברית
+            recognition.lang = 'he-IL';
             recognition.continuous = true;
             recognition.interimResults = true;
 
@@ -490,17 +576,13 @@
 
                 if (finalText) {
                     fullTranscriptText += `${myName}: ${finalText}\n`;
-                    // שידור התמלול לכל שאר המשתתפים בחדר
                     for (let peerId in connections) {
                         connections[peerId].send({ type: 'transcript', text: `${myName}: ${finalText}` });
                     }
                 }
 
                 updateTranscriptBox(fullTranscriptText + interimText);
-            };
-
-            recognition.onerror = (event) => {
-                console.error("שגיאת תמלול קול", event.error);
+                showLiveSubtitle(interimText || finalText);
             };
 
             recognition.onend = () => {
@@ -508,6 +590,12 @@
                     try { recognition.start(); } catch (e) {}
                 }
             };
+        }
+
+        function showLiveSubtitle(text) {
+            const subtitleEl = document.getElementById('local-subtitle');
+            subtitleEl.innerText = text;
+            subtitleEl.style.display = text ? 'block' : 'none';
         }
 
         function toggleSpeechToText() {
@@ -524,27 +612,25 @@
                     recognition.start();
                     btn.innerText = "עצור תמלול";
                     btn.style.background = "#ef4444";
-                    showToast("🎙️ תמלול קול חי הופעל בהצלחה");
+                    showToast("🎙️ תמלול וכתוביות הופעלו");
                 } catch (e) {}
             } else {
                 recognition.stop();
                 btn.innerText = "הפעל תמלול";
                 btn.style.background = "#0ea5e9";
-                showToast("⏹️ תמלול קול הופסק");
+                showLiveSubtitle("");
+                showToast("⏹️ תמלול הופסק");
             }
         }
 
         function updateTranscriptBox(text) {
             const box = document.getElementById('transcript-box');
-            box.innerText = text || "הקש על הפעל תמלול כדי להתחיל לשמוע ולתעד את השיעור...";
+            box.innerText = text || "הקש על הפעל תמלול...";
             box.scrollTop = box.scrollHeight;
         }
 
         function downloadTranscript() {
-            if (!fullTranscriptText.trim()) {
-                alert("אין עדיין טקסט שמור להורדה");
-                return;
-            }
+            if (!fullTranscriptText.trim()) { alert("אין עדיין טקסט שמור להורדה"); return; }
             const blob = new Blob([fullTranscriptText], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -606,6 +692,9 @@
                     } else if (data.type === 'transcript') {
                         fullTranscriptText += `${data.text}\n`;
                         updateTranscriptBox(fullTranscriptText);
+                    } else if (data.type === 'timer-sync') {
+                        timeLeft = data.time;
+                        updateTimerDisplay();
                     } else {
                         handleIncomingData(conn, data);
                     }
@@ -708,15 +797,12 @@
             } else if (data.type === 'transcript') {
                 fullTranscriptText += `${data.text}\n`;
                 updateTranscriptBox(fullTranscriptText);
+            } else if (data.type === 'timer-sync') {
+                timeLeft = data.time;
+                updateTimerDisplay();
             } else if (data.type === 'hand-raise') {
                 if (participantsData[conn.peer]) {
                     participantsData[conn.peer].hand = data.raised;
-                    updateParticipantsUI();
-                }
-            } else if (data.type === 'status-update') {
-                if (participantsData[conn.peer]) {
-                    participantsData[conn.peer].mic = data.mic;
-                    participantsData[conn.peer].cam = data.cam;
                     updateParticipantsUI();
                 }
             } else if (data.type === 'new-poll') {
@@ -1045,7 +1131,7 @@
                 localVideo.srcObject = screenStream;
                 showToast("🖥️ משתף מסך");
 
-                screenTrack.onended = () => {
+                    screenTrack.onended = () => {
                     for (let peerId in activeCalls) {
                         const sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track.kind === 'video');
                         if (sender) sender.replaceTrack(myStream.getVideoTracks()[0]);
@@ -1058,6 +1144,7 @@
         function showToast(message) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
+            toast.className, 'toast';
             toast.className = 'toast';
             toast.innerHTML = `🔔 ${message}`;
             container.appendChild(toast);
