@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>מערכת שיעורים מקוונים</title>
-    <!-- טעינה מעודכנת של LiveKit Client SDK מ-unpkg -->
-    <script src="https://unpkg.com/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <!-- טעינת LiveKit מגרסה יציבה ב-CDN חלופי מובטח -->
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client@1.15.5/dist/livekit-client.umd.min.js"></script>
     <!-- טעינת ספרית JWT -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.8.6/jsrsasign-all-min.js"></script>
     <style>
@@ -29,7 +29,7 @@
             <option value="student">תלמיד (צפייה והאזנה)</option>
             <option value="teacher">מורה (שידור מצלמה ומיקרופון)</option>
         </select>
-        <button onclick="connectToClass()">הכנס לשיעור</button>
+        <button id="connect-btn" onclick="connectToClass()" style="opacity: 0.6;" disabled>טוען מערכת...</button>
     </div>
 
     <!-- מסך השידור -->
@@ -46,6 +46,20 @@
         const API_SECRET = "a8WsGwiQGE8YjTVg26qd3TUi7eW6ODFMCmypAnGeqxq";
 
         let room = null;
+
+        // בדיקה מחזורית שמוודאת שהספרייה נטענה, ורק אז מאפשרת ללחוץ על הכפתור
+        window.addEventListener('DOMContentLoaded', () => {
+            const checkLib = setInterval(() => {
+                const LK = window.LivekitClient || window.LiveKit;
+                if (LK) {
+                    clearInterval(checkLib);
+                    const btn = document.getElementById("connect-btn");
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    btn.innerText = "הכנס לשיעור";
+                }
+            }, 500);
+        });
 
         function generateToken(roomName, username, isTeacher) {
             const header = { alg: 'HS256', typ: 'JWT' };
@@ -69,10 +83,9 @@
         }
 
         async function connectToClass() {
-            // וידוא שהאובייקט קיים תחת LivekitClient או LiveKit
             const LK = window.LivekitClient || window.LiveKit;
             if (!LK) {
-                alert("שגיאה: ספריית LiveKit טרם נטענה. אנא רענן את העמוד ונסה שוב.");
+                alert("שגיאה: ספריית LiveKit לא זמינה בדפדפן.");
                 return;
             }
 
