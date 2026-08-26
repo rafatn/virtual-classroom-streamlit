@@ -412,40 +412,6 @@
             position: relative;
         }
 
-        /* חלון מערכת שעות דינמית */
-        #schedule-container {
-            display: none;
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 18px;
-            text-align: center;
-            box-shadow: var(--shadow-float);
-        }
-
-        .schedule-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
-            font-size: 0.85rem;
-        }
-
-        .schedule-table th, .schedule-table td {
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            text-align: center;
-        }
-
-        .schedule-table th {
-            background: var(--bg-card);
-            color: #818cf8;
-        }
-
-        .schedule-table tr.current-lesson-row {
-            background: rgba(16, 185, 129, 0.12);
-            border: 2px solid var(--success);
-        }
-
         .sidebar-panels {
             display: flex;
             flex-direction: column;
@@ -613,7 +579,6 @@
                     <button onclick="toggleWhiteboard()" style="color: #f43f5e;">🎨 לוח ו-PDF</button>
                     <button onclick="toggle3DSpace()" style="color: #38bdf8;">🌌 מרחב 3D</button>
                     <button onclick="toggleGraphSpace()" style="color: #f59e0b;">📈 מחולל גרפים</button>
-                    <button onclick="toggleSchedule()" style="color: #34d399;">📅 מערכת שעות</button>
                     <button id="record-btn" class="btn-success" onclick="toggleRecording()">⏺️ הקלט</button>
                     <button onclick="muteEveryone()" class="btn-danger">🔇 השתק כולם</button>
                 </div>
@@ -635,35 +600,6 @@
                             <span id="local-name-text">אני</span>
                             <span id="local-hand-icon"></span>
                         </div>
-                    </div>
-                </div>
-
-                <!-- מערכת שעות דינמית -->
-                <div id="schedule-container">
-                    <div class="whiteboard-toolbar" style="justify-content: space-between;">
-                        <span style="font-weight: bold; color: var(--text-main); font-size: 1rem;">📅 ניהול מערכת שעות דינמית שבועית</span>
-                        <div>
-                            <button onclick="openAddLessonModal()" style="padding: 6px 14px; font-size: 0.85rem; background: var(--success); margin: 0;">➕ הוסף שיעור</button>
-                            <button onclick="toggleSchedule()" class="btn-danger" style="padding: 6px 14px; font-size: 0.85rem; margin: 0;">סגור</button>
-                        </div>
-                    </div>
-                    <div style="overflow-x: auto;">
-                        <table class="schedule-table">
-                            <thead>
-                                <tr>
-                                    <th>שעה / יום</th>
-                                    <th>ראשון</th>
-                                    <th>שני</th>
-                                    <th>שלישי</th>
-                                    <th>רביעי</th>
-                                    <th>חמישי</th>
-                                    <th>שישי</th>
-                                </tr>
-                            </thead>
-                            <tbody id="schedule-table-body">
-                                <!-- נטען דינמית -->
-                            </tbody>
-                        </table>
                     </div>
                 </div>
 
@@ -890,72 +826,9 @@
 
                 loadChatHistory();
                 loadPersonalNotes();
-                initScheduleTable();
                 initPeerServer();
                 initSpeechRecognition();
             }).catch(err => alert("שגיאה בגישה למצלמה: " + err.message));
-        }
-
-        // --- ניהול מערכת שעות דינמית ---
-        function toggleSchedule() {
-            const container = document.getElementById('schedule-container');
-            const isVisible = container.style.display === 'block';
-            container.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible) initScheduleTable();
-        }
-
-        function getStoredSchedule() {
-            const defaultSchedule = [
-                { time: "08:00 - 08:45", days: ["מתמטיקה", "פיזיקה", "ספרות", "אנגלית", "היסטוריה"] },
-                { time: "08:45 - 09:30", days: ["מתמטיקה", "תכנות", "פיזיקה", "אנגלית", "ספורט"] },
-                { time: "09:45 - 10:30", days: ["אנגלית", "היסטוריה", "מתמטיקה", "תכנות", "פיזיקה"] },
-                { time: "10:30 - 11:15", days: ["תכנות", "אנגלית", "היסטוריה", "מתמטיקה", "אמנות"] },
-                { time: "11:30 - 12:15", days: ["פיזיקה", "ספורט", "תכנות", "היסטוריה", "מתמטיקה"] }
-            ];
-            const saved = localStorage.getItem('dynamic_class_schedule');
-            return saved ? JSON.parse(saved) : defaultSchedule;
-        }
-
-        function initScheduleTable() {
-            const schedule = getStoredSchedule();
-            const tbody = document.getElementById('schedule-table-body');
-            let html = "";
-            
-            const now = new Date();
-            const currentDayIndex = now.getDay(); // 0=ראשון, 1=שני... 5=שישי
-            const currentTimeStr = now.toTimeString().substring(0, 5);
-
-            schedule.forEach((row, rowIndex) => {
-                let isCurrentRow = false;
-                // בדיקת שעה פשוטה להדגשת השיעור הנוכחי
-                let [startT, endT] = row.time.split(" - ");
-                if (currentTimeStr >= startT && currentTimeStr <= endT) {
-                    isCurrentRow = true;
-                }
-
-                html += `<tr class="${isCurrentRow ? 'current-lesson-row' : ''}">
-                    <td style="font-weight:bold; color:var(--accent);">${row.time}</td>`;
-                
-                for (let d = 0; d < 5; d++) {
-                    let lesson = row.days[d] || "פנוי";
-                    let isTodayHighlight = (d === currentDayIndex && isCurrentRow);
-                    html += `<td style="${isTodayHighlight ? 'background:rgba(16,185,129,0.25); font-weight:bold;' : ''}">${lesson}</td>`;
-                }
-                html += `</tr>`;
-            });
-            tbody.innerHTML = html;
-        }
-
-        function openAddLessonModal() {
-            const timeSlot = prompt("הזן טווח שעות (למשל: 12:30 - 13:15):");
-            if (!timeSlot) return;
-            const dayName = prompt("הזן את שם השיעור ליום ראשון (או דלג):") || "פנוי";
-            
-            let schedule = getStoredSchedule();
-            schedule.push({ time: timeSlot, days: [dayName, "פנוי", "פנוי", "פנוי", "פנוי"] });
-            localStorage.setItem('dynamic_class_schedule', JSON.stringify(schedule));
-            initScheduleTable();
-            showToast("📅 השיעור נוסף למערכת בהצלחה!");
         }
 
         function initAudioActivityDetector(stream, boxId) {
