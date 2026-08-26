@@ -644,11 +644,14 @@
                 <div id="graph-container">
                     <div class="whiteboard-toolbar" style="flex-wrap: wrap; gap: 8px;">
                         <span style="font-weight: bold; color: var(--text-main); font-size: 0.85rem;">פונקציות (מופרדות בפסיק):</span>
-                        <input type="text" id="math-func-input" value="Math.sin(x), Math.cos(x)" placeholder="למשל: Math.sin(x), x*x - 4" style="width: 260px; margin: 0; padding: 6px 12px; font-size: 0.85rem;" dir="ltr">
+                        <input type="text" id="math-func-input" value="Math.sin(x), Math.cos(x)" placeholder="למשל: Math.sin(x), x*x - 4" style="width: 220px; margin: 0; padding: 6px 12px; font-size: 0.85rem;" dir="ltr">
+                        
                         <span style="font-weight: bold; color: var(--text-muted); font-size: 0.8rem;">X מינימלי:</span>
-                        <input type="number" id="x-min" value="-10" style="width: 60px; margin: 0; padding: 4px; font-size: 0.8rem; text-align:center;">
+                        <input type="number" id="x-min" value="-1000" style="width: 95px; margin: 0; padding: 4px; font-size: 0.85rem; text-align:center;" dir="ltr">
+                        
                         <span style="font-weight: bold; color: var(--text-muted); font-size: 0.8rem;">X מקסימלי:</span>
-                        <input type="number" id="x-max" value="10" style="width: 60px; margin: 0; padding: 4px; font-size: 0.8rem; text-align:center;">
+                        <input type="number" id="x-max" value="1000" style="width: 95px; margin: 0; padding: 4px; font-size: 0.85rem; text-align:center;" dir="ltr">
+                        
                         <span style="font-weight: bold; color: var(--text-muted); font-size: 0.8rem;">ניתוח:</span>
                         <select id="show-analysis" style="background: var(--bg-base); color: var(--text-main); padding: 4px 8px; font-size: 0.8rem; margin: 0;">
                             <option value="yes">הצג (שורשים וקיצון)</option>
@@ -867,8 +870,8 @@
 
         function plotCustomGraph() {
             const rawExprs = document.getElementById('math-func-input').value.trim();
-            const xMin = parseFloat(document.getElementById('x-min').value) || -10;
-            const xMax = parseFloat(document.getElementById('x-max').value) || 10;
+            const xMin = parseFloat(document.getElementById('x-min').value) || -1000;
+            const xMax = parseFloat(document.getElementById('x-max').value) || 1000;
             const analysisMode = document.getElementById('show-analysis').value === 'yes';
 
             if (!rawExprs) return;
