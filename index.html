@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית אולטימטיבית - עיצוב פרימיום מתקדם</title>
+    <title>כיתה וירטואלית אולטימטיבית - צבעים ייחודיים למשתתפים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js -->
@@ -98,7 +98,6 @@
             filter: drop-shadow(0 2px 15px rgba(129, 140, 248, 0.3));
         }
 
-        /* כרטיסי כניסה והתחברות מעוצבים */
         .glass-card {
             background: rgba(15, 23, 42, 0.75);
             border: 1px solid var(--border-color);
@@ -170,7 +169,6 @@
         .btn-warning { background: var(--warning); color: #000; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
         .btn-warning:hover { background: #d97706; box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4); }
 
-        /* פריסה ראשית */
         .main-layout {
             display: none;
             grid-template-columns: 1fr 380px;
@@ -187,7 +185,6 @@
             gap: 16px;
         }
 
-        /* סרגל כלים עליון מרחף */
         .controls-bar {
             background: rgba(15, 23, 42, 0.85);
             border: 1px solid var(--border-color);
@@ -215,7 +212,6 @@
             transform: translateY(-1px);
         }
 
-        /* גריד וידאו מודרני */
         .video-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -275,17 +271,16 @@
             display: flex;
         }
 
-        /* תוויות וידאו מעוצבות עם תאורת לד */
         .video-label {
             position: absolute;
             bottom: 12px;
             right: 12px;
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            padding: 6px 12px;
-            font-size: 0.82rem;
-            font-weight: 500;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: 700;
             border-radius: var(--radius-sm);
             display: flex;
             gap: 8px;
@@ -308,7 +303,6 @@
             box-shadow: 0 0 8px var(--danger);
         }
 
-        /* כתוביות חירום חיות */
         .live-subtitle-overlay {
             position: absolute;
             bottom: 60px;
@@ -336,7 +330,6 @@
             to { opacity: 1; transform: translate(-50%, 0); }
         }
 
-        /* לוח לבן פרימיום */
         #whiteboard-container {
             display: none;
             background: #ffffff;
@@ -365,7 +358,6 @@
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);
         }
 
-        /* פאנלים צדדיים */
         .sidebar-panels {
             display: flex;
             flex-direction: column;
@@ -398,7 +390,6 @@
             letter-spacing: -0.2px;
         }
 
-        /* רשימות מעוצבות */
         .list-container {
             list-style: none;
             padding: 0;
@@ -426,7 +417,6 @@
             background: rgba(51, 65, 85, 0.7);
         }
 
-        /* צ'אט כיתתי מודרני */
         .chat-messages {
             background: rgba(6, 9, 19, 0.6);
             border: 1px solid var(--border-color);
@@ -465,7 +455,6 @@
             padding: 9px 16px;
         }
 
-        /* Toast הודעות צפות מעוצבות */
         #toast-container {
             position: fixed;
             top: 24px;
@@ -566,7 +555,7 @@
                         <video id="local-video" autoplay muted playsinline></video>
                         <div class="audio-only-placeholder">🎙️</div>
                         <div class="live-subtitle-overlay" id="local-subtitle"></div>
-                        <div class="video-label">
+                        <div class="video-label" id="local-video-label">
                             <span class="status-dot" id="local-status-dot"></span>
                             <span id="local-name-text">אני</span>
                             <span id="local-hand-icon"></span>
@@ -689,6 +678,27 @@
         let pageRendering = false;
         let pageNumPending = null;
 
+        // פלטת צבעים זוהרים ייחודיים לכל משתתף
+        const userColors = [
+            '#38bdf8', // תכלת עמוק
+            '#f472b6', // ורוד פסטלי
+            '#34d399', // ירוק מנטה
+            '#fbbf24', // זהב-כתום
+            '#c084fc', // סגול לילך
+            '#fb7185', // אדום-קורל
+            '#2dd4bf', // טורקיז
+            '#818cf8'  // אינדיגו בהיר
+        ];
+
+        function getUserColor(id) {
+            let hash = 0;
+            for (let i = 0; i < id.length; i++) {
+                hash = id.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            let index = Math.abs(hash) % userColors.length;
+            return userColors[index];
+        }
+
         const videoGrid = document.getElementById('video-grid');
         const localVideo = document.getElementById('local-video');
         const chatMessages = document.getElementById('chat-messages');
@@ -700,9 +710,13 @@
             getMediaStreamWithQuality('sd').then(stream => {
                 myStream = stream;
                 localVideo.srcObject = stream;
+                
+                const localColor = getUserColor('local');
                 document.getElementById('local-name-text').innerText = myName;
+                document.getElementById('local-name-text').style.color = localColor;
+                document.getElementById('local-video-label').style.borderColor = localColor;
 
-                participantsData['local'] = { name: myName, mic: true, cam: true, hand: false };
+                participantsData['local'] = { name: myName, mic: true, cam: true, hand: false, color: localColor };
                 updateParticipantsUI();
 
                 document.getElementById('login-screen').style.display = 'none';
@@ -877,6 +891,11 @@
                     } else if (data.type === 'timer-sync') {
                         timeLeft = data.time;
                         updateTimerDisplay();
+                    } else if (data.type === 'user-info') {
+                        if (participantsData[conn.peer]) {
+                            participantsData[conn.peer].name = data.name;
+                            updateParticipantsUI();
+                        }
                     } else {
                         handleIncomingData(conn, data);
                     }
@@ -887,8 +906,9 @@
                 call.answer(myStream);
                 call.on('stream', (remoteStream) => {
                     const remoteName = call.metadata ? call.metadata.name : "משתתף";
-                    participantsData[call.peer] = { name: remoteName, mic: true, cam: true, hand: false };
-                    addVideoStream(call.peer, remoteStream, remoteName);
+                    const remoteColor = getUserColor(call.peer);
+                    participantsData[call.peer] = { name: remoteName, mic: true, cam: true, hand: false, color: remoteColor };
+                    addVideoStream(call.peer, remoteStream, remoteName, remoteColor);
                     updateParticipantsUI();
                 });
                 activeCalls[call.peer] = call;
@@ -905,7 +925,10 @@
             const conn = peer.connect(targetId, { metadata: { name: myName } });
             connections[targetId] = conn;
 
-            conn.on('open', () => { conn.send({ type: 'join-request', name: myName }); });
+            conn.on('open', () => { 
+                conn.send({ type: 'join-request', name: myName }); 
+                conn.send({ type: 'user-info', name: myName });
+            });
 
             conn.on('data', (data) => {
                 if (data.type === 'admitted') {
@@ -915,8 +938,9 @@
 
                     const call = peer.call(targetId, myStream, { metadata: { name: myName } });
                     call.on('stream', (remoteStream) => {
-                        participantsData[targetId] = { name: "מארח החדר", mic: true, cam: true, hand: false };
-                        addVideoStream(targetId, remoteStream, "מארח החדר");
+                        const hostColor = getUserColor(targetId);
+                        participantsData[targetId] = { name: "מארח החדר", mic: true, cam: true, hand: false, color: hostColor };
+                        addVideoStream(targetId, remoteStream, "מארח החדר", hostColor);
                         updateParticipantsUI();
                     });
                     activeCalls[targetId] = call;
@@ -939,7 +963,8 @@
                 let html = "";
                 keys.forEach(id => {
                     let w = waitingQueue[id];
-                    html += `<li><span><b>${w.name}</b></span> <span style="display:flex; gap:6px;"><button onclick="admitUser('${id}')" class="btn-success" style="font-size:0.75rem; padding:4px 10px; margin:0;">אשר</button><button onclick="rejectUser('${id}')" class="btn-danger" style="font-size:0.75rem; padding:4px 10px; margin:0;">דחה</button></span></li>`;
+                    let waitingColor = getUserColor(id);
+                    html += `<li><span style="color:${waitingColor}; font-weight:700;">${w.name}</span> <span style="display:flex; gap:6px;"><button onclick="admitUser('${id}')" class="btn-success" style="font-size:0.75rem; padding:4px 10px; margin:0;">אשר</button><button onclick="rejectUser('${id}')" class="btn-danger" style="font-size:0.75rem; padding:4px 10px; margin:0;">דחה</button></span></li>`;
                 });
                 listEl.innerHTML = html;
             } else {
@@ -951,6 +976,7 @@
             if (waitingQueue[peerId]) {
                 let conn = waitingQueue[peerId].conn;
                 conn.send({ type: 'admitted', teacherId: peer.id });
+                conn.send({ type: 'user-info', name: myName });
                 connections[peerId] = conn;
                 setupDataConnection(conn);
                 delete waitingQueue[peerId];
@@ -987,6 +1013,14 @@
                     participantsData[conn.peer].hand = data.raised;
                     updateParticipantsUI();
                 }
+            } else if (data.type === 'user-info') {
+                if (participantsData[conn.peer]) {
+                    participantsData[conn.peer].name = data.name;
+                    updateParticipantsUI();
+                    // עדכון שֵM גם בתווית הווידאו
+                    const labelSpan = document.querySelector(`#video-${conn.peer} .video-label span:nth-child(2)`);
+                    if (labelSpan) labelSpan.innerText = data.name;
+                }
             } else if (data.type === 'new-poll') {
                 currentPoll = data.poll;
                 renderPoll();
@@ -999,7 +1033,7 @@
             }
         }
 
-        function addVideoStream(peerId, stream, name) {
+        function addVideoStream(peerId, stream, name, color) {
             if (document.getElementById('video-' + peerId)) return;
 
             const box = document.createElement('div');
@@ -1018,7 +1052,9 @@
 
             const label = document.createElement('div');
             label.className = 'video-label';
-            label.innerHTML = `<span class="status-dot"></span><span>${name}</span>`;
+            label.style.borderColor = color;
+
+            label.innerHTML = `<span class="status-dot"></span><span style="color:${color};">${name}</span>`;
 
             box.appendChild(video);
             box.appendChild(placeholder);
@@ -1037,7 +1073,7 @@
                 let micIcon = p.mic ? "🎤" : "🔇";
                 let camIcon = p.cam ? "📹" : "📷❌";
                 let handIcon = p.hand ? " ✋" : "";
-                html += `<li><span><b>${p.name}</b>${handIcon}</span> <span style="display:flex; gap:6px;">${micIcon} ${camIcon}</span></li>`;
+                html += `<li><span style="color:${p.color}; font-weight:700;">${p.name}${handIcon}</span> <span style="display:flex; gap:6px;">${micIcon} ${camIcon}</span></li>`;
             }
             listEl.innerHTML = html;
             document.getElementById('participant-count').innerText = count;
@@ -1272,6 +1308,7 @@
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'chat', name: myName, text: text });
             }
+            input.value = ``;
             input.value = '';
         }
 
