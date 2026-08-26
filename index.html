@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית מתקדמת - PDF, חדר המתנה, סקרים וטשטוש</title>
+    <title>כיתה וירטואלית מתקדמת - רוחב פס, PDF, חדר המתנה וסקרים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <!-- טעינת PDF.js להצגת קבצי PDF על הלוח -->
@@ -119,6 +119,23 @@
             filter: blur(8px) contrast(1.1);
         }
 
+        /* מצב חיסכון ברוחב פס - הסתרת וידאו מרחוק */
+        .audio-only-mode video {
+            display: none !important;
+        }
+        .audio-only-placeholder {
+            display: none;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            background: #334155;
+            font-size: 2.5rem;
+        }
+        .audio-only-mode .audio-only-placeholder {
+            display: flex;
+        }
+
         .video-label {
             position: absolute;
             bottom: 5px;
@@ -130,6 +147,7 @@
             display: flex;
             gap: 6px;
             align-items: center;
+            z-index: 5;
         }
 
         .controls-bar {
@@ -146,7 +164,7 @@
             gap: 15px;
         }
 
-        .participants-panel, .waiting-panel {
+        .participants-panel, .waiting-panel, .bandwidth-panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
@@ -277,7 +295,6 @@
             100% { opacity: 0; transform: translateY(-20px); }
         }
 
-        /* מסך המתנה חסום */
         #waiting-room-screen {
             display: none;
             text-align: center;
@@ -290,7 +307,7 @@
     <div id="toast-container"></div>
 
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית - PDF, חדר המתנה, סקרים וטשטוש</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית - בקרת איכות, PDF, חדר המתנה וסקרים</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -332,6 +349,7 @@
                 <div class="video-grid" id="video-grid">
                     <div class="video-box" id="local-video-box" onclick="toggleSpotlight(this)">
                         <video id="local-video" autoplay muted playsinline></video>
+                        <div class="audio-only-placeholder">🎙️</div>
                         <div class="video-label" id="local-label">
                             <span id="local-name-text">אני</span>
                             <span id="local-hand-icon"></span>
@@ -369,6 +387,25 @@
 
             <!-- פאנלים בצד -->
             <div class="panels-container">
+                <!-- פאנל ניהול רוחב פס ואיכות -->
+                <div class="bandwidth-panel">
+                    <h3 style="margin: 0 0 8px; font-size: 0.95rem; color: #38bdf8;">⚙️ ניהול רוחב פס וחיבור</h3>
+                    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+                        <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                            <span>מצב שמע בלבד (חסוך אינטרנט):</span>
+                            <input type="checkbox" id="bandwidth-audio-mode" onchange="toggleAudioOnlyMode(this)" style="margin:0; width: 18px; height: 18px;">
+                        </label>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span>רזולוציית מצלמה שלי:</span>
+                            <select id="video-quality-select" onchange="changeVideoQuality(this.value)" style="padding: 4px; font-size: 0.8rem; margin: 0;">
+                                <option value="hd">HD (גבוהה)</option>
+                                <option value="sd" selected>רגילה (SD)</option>
+                                <option value="low">נמוכה (לחיסכון)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- פאנל חדר המתנה (יופיע למארח/המורה כשיש ממתינים) -->
                 <div class="waiting-panel" id="waiting-panel" style="display: none;">
                     <h3 style="margin: 0 0 5px; font-size: 0.95rem; color: #f59e0b;">⏳ חדר המתנה (<span id="waiting-count">0</span>)</h3>
@@ -418,7 +455,7 @@
         let mediaRecorder;
         let recordedChunks = [];
         let participantsData = {}; 
-        let waitingQueue = {}; // רשימת ממתינים לחדר המתנה { peerId: { name, conn, call } }
+        let waitingQueue = {}; 
         let currentPoll = null;
 
         // משתני ניהול PDF על הלוח
@@ -426,7 +463,6 @@
         let pageNum = 1;
         let pageRendering = false;
         let pageNumPending = null;
-        let pdfBackgroundImage = null;
 
         const videoGrid = document.getElementById('video-grid');
         const localVideo = document.getElementById('local-video');
@@ -436,23 +472,66 @@
             myName = document.getElementById('my-name').value.trim();
             if (!myName) { alert("נא להזין שם מלא"); return; }
 
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                .then(stream => {
-                    myStream = stream;
-                    localVideo.srcObject = stream;
-                    document.getElementById('local-name-text').innerText = myName;
+            getMediaStreamWithQuality('sd').then(stream => {
+                myStream = stream;
+                localVideo.srcObject = stream;
+                document.getElementById('local-name-text').innerText = myName;
 
-                    participantsData['local'] = { name: myName, mic: true, cam: true, hand: false };
-                    updateParticipantsUI();
+                participantsData['local'] = { name: myName, mic: true, cam: true, hand: false };
+                updateParticipantsUI();
 
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('room-controls').style.display = 'block';
-                    document.getElementById('main-layout').style.display = 'grid';
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('room-controls').style.display = 'block';
+                document.getElementById('main-layout').style.display = 'grid';
 
-                    loadChatHistory();
-                    initPeerServer();
-                })
-                .catch(err => alert("שגיאה בגישה למצלמה: " + err.message));
+                loadChatHistory();
+                initPeerServer();
+            }).catch(err => alert("שגיאה בגישה למצלמה: " + err.message));
+        }
+
+        function getMediaStreamWithQuality(quality) {
+            let constraints = { video: true, audio: true };
+            if (quality === 'low') {
+                constraints.video = { width: { ideal: 320 }, height: { ideal: 180 }, frameRate: { max: 15 } };
+            } else if (quality === 'sd') {
+                constraints.video = { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { max: 24 } };
+            } else if (quality === 'hd') {
+                constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { max: 30 } };
+            }
+            return navigator.mediaDevices.getUserMedia(constraints);
+        }
+
+        function changeVideoQuality(quality) {
+            getMediaStreamWithQuality(quality).then(newStream => {
+                let videoTrack = newStream.getVideoTracks()[0];
+                let audioTrack = newStream.getAudioTracks()[0];
+                
+                // החלפת הטרק במצלמה המקומית
+                localVideo.srcObject = newStream;
+                myStream = newStream;
+
+                // עדכון הטרקים בכל השיחות הפעילות מול משתתפים אחרים
+                for (let peerId in activeCalls) {
+                    let sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) sender.replaceTrack(videoTrack);
+                }
+                showToast("⚙️ איכות המצלמה עודכנה בהצלחה");
+            }).catch(err => {
+                console.error("שגיאה בשינוי רזולוציה", err);
+            });
+        }
+
+        function toggleAudioOnlyMode(checkbox) {
+            const isAudioOnly = checkbox.checked;
+            // עובר על כל תיקיות הווידאו ומפעיל/מכבה את תצוגת הווידאו שלהן לצורך חיסכון בנתונים
+            document.querySelectorAll('.video-box').forEach(box => {
+                if (isAudioOnly) {
+                    box.classList.add('audio-only-mode');
+                } else {
+                    box.classList.remove('audio-only-mode');
+                }
+            });
+            showToast(isAudioOnly ? "📶 מצב שמע בלבד הופעל (רוחב פס נמוך)" : "📶 מצב וידאו מלא חזר לפעילות");
         }
 
         function initPeerServer(roomId = null) {
@@ -462,20 +541,16 @@
                 document.getElementById('room-info').innerHTML = `קוד החדר שלך (שלח לתלמידים): <b>${id}</b>`;
             });
 
-            // ניהול בקשות כניסה נכנסות (חדר המתנה)
             peer.on('connection', (conn) => {
                 conn.on('data', (data) => {
                     if (data.type === 'join-request') {
-                        // הוספה לחדר המתנה של המורה
                         waitingQueue[conn.peer] = { name: data.name, conn: conn };
                         updateWaitingUI();
                         showToast(`⏳ תלמיד/ה חדש/ה (${data.name}) ממתין בחדר ההמתנה`);
                     } else if (data.type === 'admitted') {
-                        // המורה אישר את התלמיד
                         document.getElementById('waiting-room-screen').style.display = 'none';
                         document.getElementById('main-layout').style.display = 'grid';
                         showToast("✅ המורה אישר את כניסתך לשיעור!");
-                        // התחברות אוטומטית בווידאו למורה
                         connectToTeacherRoom(data.teacherId);
                     } else if (data.type === 'rejected') {
                         alert("המורה דחה את בקשת ההצטרפות לשיעור.");
@@ -487,7 +562,6 @@
             });
 
             peer.on('call', (call) => {
-                // בדיקה האם המשתשר מאושר (נמצא ברשימת החדר הראשי או שזה מארח)
                 call.answer(myStream);
                 call.on('stream', (remoteStream) => {
                     const remoteName = call.metadata ? call.metadata.name : "משתתף";
@@ -504,11 +578,9 @@
             const targetId = document.getElementById('target-room-input').value.trim();
             if (!targetId) { alert("נא להזין קוד חדר תקין"); return; }
 
-            // מעבר למסך המתנה חסום בזמן שהמורה מאשר
             document.getElementById('room-controls').style.display = 'none';
             document.getElementById('waiting-room-screen').style.display = 'block';
 
-            // שליחת בקשת הצטרפות למורה
             const conn = peer.connect(targetId, { metadata: { name: myName } });
             connections[targetId] = conn;
 
@@ -522,7 +594,6 @@
                     document.getElementById('main-layout').style.display = 'grid';
                     showToast("✅ המורה אישר את כניסתך לשיעור!");
 
-                    // חיוג ווידאו אל המורה
                     const call = peer.call(targetId, myStream, { metadata: { name: myName } });
                     call.on('stream', (remoteStream) => {
                         participantsData[targetId] = { name: "מארח החדר", mic: true, cam: true, hand: false };
@@ -633,6 +704,9 @@
 
             const box = document.createElement('div');
             box.className = 'video-box';
+            if (document.getElementById('bandwidth-audio-mode').checked) {
+                box.classList.add('audio-only-mode');
+            }
             box.id = 'video-' + peerId;
             box.onclick = () => toggleSpotlight(box);
 
@@ -641,12 +715,17 @@
             video.autoplay = true;
             video.playsInline = true;
 
+            const placeholder = document.createElement('div');
+            placeholder.className = 'audio-only-placeholder';
+            placeholder.innerHTML = '🎙️';
+
             const label = document.createElement('div');
             label.className = 'video-label';
             label.id = 'label-' + peerId;
             label.innerHTML = `<span>${name}</span><span id="hand-${peerId}"></span><span id="status-${peerId}"></span>`;
 
             box.appendChild(video);
+            box.appendChild(placeholder);
             box.appendChild(label);
             videoGrid.appendChild(box);
         }
@@ -693,7 +772,6 @@
             showToast(isBlurred ? "🌫️ טשטוש רקע הופעל" : "🌫️ טשטוש רקע הוסר");
         }
 
-        // --- ניהול סקרים כיתתיים ---
         function openPollModal() {
             const question = prompt("הכנס את שאלת הסקר:");
             if (!question) return;
@@ -810,7 +888,6 @@
             document.getElementById('wb-color').value = '#ffffff';
         }
 
-        // טעינת קובץ PDF והמרתו לעמודים על הלוח
         function loadPDF(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -839,10 +916,7 @@
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
 
-                const renderContext = {
-                    canvasContext: ctx,
-                    viewport: viewport
-                };
+                const renderContext = { canvasContext: ctx, viewport: viewport };
                 const renderTask = page.render(renderContext);
                 renderTask.promise.then(() => {
                     pageRendering = false;
@@ -856,11 +930,7 @@
         }
 
         function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
+            if (pageRendering) { pageNumPending = num; } else { renderPage(num); }
         }
 
         function prevPdfPage() {
@@ -923,9 +993,7 @@
             }
         }
 
-        function clearCanvas() { 
-            ctx.clearRect(0, 0, canvas.width, canvas.height); 
-        }
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
         // --- צ'אט וקבצים ---
         function saveAndAppendMessage(sender, text) {
@@ -1015,7 +1083,7 @@
             navigator.mediaDevices.getDisplayMedia({ cursor: true }).then(screenStream => {
                 const screenTrack = screenStream.getVideoTracks()[0];
                 for (let peerId in activeCalls) {
-                    const sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track.kind === 'video');
+                    const sender = activeCalls[peerId].peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
                     if (sender) sender.replaceTrack(screenTrack);
                 }
                 localVideo.srcObject = screenStream;
@@ -1035,7 +1103,7 @@
         function showToast(message) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className, toast.className = 'toast';
+            toast.className = 'toast';
             toast.innerHTML = `🔔 ${message}`;
             container.appendChild(toast);
             setTimeout(() => { toast.remove(); }, 4000);
