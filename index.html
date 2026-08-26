@@ -921,10 +921,9 @@
                     borderWidth: 2.5,
                     pointRadius: 0,
                     tension: 0.15,
-                    spanGaps: false // מונע חיבור קווים שגוי באסימפטוטות ואי-רציפות
+                    spanGaps: false
                 });
 
-                // ניתוח מתמטי (שורשים וקיצון לפונקציה הראשונה)
                 if (analysisMode && index === 0) {
                     let roots = [];
                     let peaks = [];
@@ -1006,7 +1005,6 @@
             });
             isGraphInitialized = true;
 
-            // סנכרון עם שאר המשתתפים בחדר
             for (let peerId in connections) {
                 connections[peerId].send({ type: 'math-graph', expr: rawExprs, xMin: xMin, xMax: xMax, analysis: analysisMode });
             }
@@ -1715,7 +1713,7 @@
                 recordedChunks = [];
                 navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(stream => {
                     mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
-                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.data = e.data; };
                     mediaRecorder.onstop = () => {
                         const blob = new Blob(recordedChunks, { type: 'video/webm' });
                         const url = URL.createObjectURL(blob);
