@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית מתקדמת - פוקוס, השתקת כולם והיסטוריה</title>
+    <title>כיתה וירטואלית מלאה - הרמת יד, לוח משוכלל ורשימת משתתפים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -15,6 +15,7 @@
             --border: #334155;
             --danger: #ef4444;
             --success: #22c55e;
+            --warning: #f59e0b;
         }
 
         body {
@@ -30,7 +31,7 @@
 
         .container {
             width: 100%;
-            max-width: 1300px;
+            max-width: 1400px;
         }
 
         .card {
@@ -43,7 +44,7 @@
             text-align: center;
         }
 
-        input, button {
+        input, button, select {
             padding: 10px 15px;
             margin: 5px;
             border-radius: 6px;
@@ -63,6 +64,7 @@
         button:hover { background: var(--accent-hover); }
         .danger { background: var(--danger); }
         .success { background: var(--success); }
+        .warning { background: var(--warning); color: #000; }
 
         .main-layout {
             display: none;
@@ -70,7 +72,7 @@
             gap: 20px;
         }
 
-        @media(max-width: 900px) {
+        @media(max-width: 1000px) {
             .main-layout { grid-template-columns: 1fr; }
         }
 
@@ -96,7 +98,6 @@
             border-color: var(--accent);
         }
 
-        /* מצב פוקוס / Spotlight */
         .video-box.spotlight {
             grid-column: 1 / -1;
             aspect-ratio: 21/9;
@@ -113,21 +114,27 @@
             position: absolute;
             bottom: 5px;
             right: 5px;
-            background: rgba(0,0,0,0.7);
-            padding: 2px 8px;
+            background: rgba(0,0,0,0.75);
+            padding: 3px 8px;
             font-size: 0.8rem;
             border-radius: 4px;
             display: flex;
-            gap: 5px;
+            gap: 6px;
             align-items: center;
         }
 
         .controls-bar {
             display: flex;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
             margin-bottom: 15px;
+        }
+
+        .panels-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .tools-panel {
@@ -137,7 +144,35 @@
             padding: 15px;
             display: flex;
             flex-direction: column;
-            height: 650px;
+            height: 340px;
+        }
+
+        .participants-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            height: 250px;
+            overflow-y: auto;
+        }
+
+        .participants-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: right;
+        }
+
+        .participants-list li {
+            padding: 6px 10px;
+            margin-bottom: 5px;
+            background: #0f172a;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
         }
 
         .chat-messages {
@@ -173,8 +208,16 @@
             margin-top: 15px;
             background: white;
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             text-align: center;
+        }
+
+        .whiteboard-toolbar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
         }
 
         canvas {
@@ -184,7 +227,6 @@
             cursor: crosshair;
         }
 
-        /* התרעות קופצות */
         #toast-container {
             position: fixed;
             top: 20px;
@@ -222,7 +264,7 @@
     <div id="toast-container"></div>
 
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית מתקדמת עם פוקוס ושליטת מורה</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית מתקדמת עם הרמת יד וכלים מלאים</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -242,14 +284,15 @@
         <!-- אזור השידור והכלים -->
         <div class="main-layout" id="main-layout">
             <div>
-                <!-- סרגל בקרת שמע, וידאו, הקלטה ושליטת מורה -->
+                <!-- סרגל בקרת שמע, וידאו, הקלטה והרמת יד -->
                 <div class="controls-bar">
                     <button id="mic-btn" onclick="toggleMic()">🎤 השתק מיקרופון</button>
                     <button id="cam-btn" onclick="toggleCamera()">📹 לכבות מצלמה</button>
+                    <button id="hand-btn" class="warning" onclick="toggleHandRaise()">✋ הרם יד</button>
                     <button onclick="toggleScreenShare()" style="background: #8b5cf6;">🖥️ שתף מסך</button>
                     <button onclick="toggleWhiteboard()" style="background: #ec4899;">🎨 לוח לבן</button>
-                    <button id="record-btn" class="success" onclick="toggleRecording()">⏺️ התחל הקלטה</button>
-                    <button onclick="muteEveryone()" class="danger" style="background: #b91c1c;">🔇 השתק את כולם (מורה)</button>
+                    <button id="record-btn" class="success" onclick="toggleRecording()">⏺️ הקלט</button>
+                    <button onclick="muteEveryone()" class="danger" style="background: #b91c1c;">🔇 השתק כולם</button>
                 </div>
 
                 <!-- גריד וידאו -->
@@ -258,32 +301,53 @@
                         <video id="local-video" autoplay muted playsinline></video>
                         <div class="video-label" id="local-label">
                             <span id="local-name-text">אני</span>
+                            <span id="local-hand-icon"></span>
                             <span id="local-status-icons"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- לוח לבן -->
+                <!-- לוח לבן עם כלים מתקדמים -->
                 <div id="whiteboard-container">
-                    <h4 style="color: #000; margin: 0 0 5px;">לוח לבן שיתופי</h4>
-                    <canvas id="whiteboard" width="600" height="350"></canvas>
-                    <br>
-                    <button onclick="clearCanvas()" class="danger" style="margin-top: 5px; padding: 5px 10px;">נקה לוח</button>
+                    <div class="whiteboard-toolbar">
+                        <span style="color: #000; font-weight: bold;">צבע:</span>
+                        <input type="color" id="wb-color" value="#000000" style="padding: 0; width: 35px; height: 35px; cursor: pointer;">
+                        <span style="color: #000; font-weight: bold; margin-right: 10px;">עובי:</span>
+                        <select id="wb-size" style="background: #fff; color: #000; padding: 4px;">
+                            <option value="2">דק (2px)</option>
+                            <option value="5" selected>בינוני (5px)</option>
+                            <option value="12">עבה (12px)</option>
+                        </select>
+                        <button onclick="setEraser()" style="background: #64748b; padding: 6px 12px; margin-right: 10px;">🧽 מחק</button>
+                        <button onclick="clearCanvas()" class="danger" style="padding: 6px 12px;">נקה לוח</button>
+                    </div>
+                    <canvas id="whiteboard" width="650" height="360"></canvas>
                 </div>
             </div>
 
-            <!-- פאנל צ'אט וקבצים -->
-            <div class="tools-panel">
-                <h3 style="margin-top: 0; font-size: 1.1rem;">💬 צ'אט וקבצים כיתתיים</h3>
-                <div class="chat-messages" id="chat-messages"></div>
-                <div class="chat-input-area">
-                    <div class="chat-row">
-                        <input type="text" id="chat-input" placeholder="כתוב הודעה..." onkeypress="handleChatKey(event)">
-                        <button onclick="sendChatMessage()">שלח</button>
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: #94a3b8;">
-                        <span>צרף קובץ/תמונה:</span>
-                        <input type="file" id="file-input" onchange="sendFile(event)" style="font-size: 0.8rem; padding: 4px; margin: 0; background: #0f172a;">
+            <!-- פאנלים בצד (רשימת משתתפים וצ'אט) -->
+            <div class="panels-container">
+                <!-- רשימת משתתפים -->
+                <div class="participants-panel">
+                    <h3 style="margin-top: 0; font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;">👥 משתתפים בחדר (<span id="participant-count">1</span>)</h3>
+                    <ul class="participants-list" id="participants-list">
+                        <!-- משתתף מקומי נוסף אוטומטית -->
+                    </ul>
+                </div>
+
+                <!-- פאנל צ'אט וקבצים -->
+                <div class="tools-panel">
+                    <h3 style="margin-top: 0; font-size: 1rem;">💬 צ'אט כיתתי</h3>
+                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-input-area">
+                        <div class="chat-row">
+                            <input type="text" id="chat-input" placeholder="כתוב הודעה..." onkeypress="handleChatKey(event)">
+                            <button onclick="sendChatMessage()">שלח</button>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: #94a3b8;">
+                            <span>צרף קובץ:</span>
+                            <input type="file" id="file-input" onchange="sendFile(event)" style="font-size: 0.75rem; padding: 2px; margin: 0; background: #0f172a;">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -298,6 +362,7 @@
         let activeCalls = {}; 
         let mediaRecorder;
         let recordedChunks = [];
+        let participantsData = {}; // שמירת מידע על כל משתתף (שם, מיקרופון, מצלמה, יד)
 
         const videoGrid = document.getElementById('video-grid');
         const localVideo = document.getElementById('local-video');
@@ -313,11 +378,14 @@
                     localVideo.srcObject = stream;
                     document.getElementById('local-name-text').innerText = myName;
 
+                    participantsData['local'] = { name: myName, mic: true, cam: true, hand: false };
+                    updateParticipantsUI();
+
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('room-controls').style.display = 'block';
                     document.getElementById('main-layout').style.display = 'grid';
 
-                    loadChatHistory(); // טעינת היסטוריית צ'אט
+                    loadChatHistory();
                     initPeerServer();
                 })
                 .catch(err => alert("שגיאה בגישה למצלמה: " + err.message));
@@ -334,7 +402,9 @@
                 call.answer(myStream);
                 call.on('stream', (remoteStream) => {
                     const remoteName = call.metadata ? call.metadata.name : "משתתף";
+                    participantsData[call.peer] = { name: remoteName, mic: true, cam: true, hand: false };
                     addVideoStream(call.peer, remoteStream, remoteName);
+                    updateParticipantsUI();
                     showToast(`👤 ${remoteName} הצטרף לשיעור`);
                 });
                 activeCalls[call.peer] = call;
@@ -354,7 +424,9 @@
 
             const call = peer.call(targetId, myStream, { metadata: { name: myName } });
             call.on('stream', (remoteStream) => {
+                participantsData[targetId] = { name: "מארח החדר", mic: true, cam: true, hand: false };
                 addVideoStream(targetId, remoteStream, "מארח החדר");
+                updateParticipantsUI();
                 showToast(`✅ התחברת בהצלחה לחדר השיעור!`);
             });
             activeCalls[targetId] = call;
@@ -370,18 +442,32 @@
                 } else if (data.type === 'file') {
                     saveAndAppendFile(data.name, data.fileName, data.fileData);
                     showToast(`📄 קובץ חדש התקבל מ-${data.name}`);
+                } else if (data.type === 'hand-raise') {
+                    if (participantsData[conn.peer]) {
+                        participantsData[conn.peer].hand = data.raised;
+                        updateParticipantsUI();
+                        updateVideoLabel(conn.peer);
+                        if (data.raised) showToast(`✋ ${participantsData[conn.peer].name} הרים/הרימה את היד!`);
+                    }
+                } else if (data.type === 'status-update') {
+                    if (participantsData[conn.peer]) {
+                        participantsData[conn.peer].mic = data.mic;
+                        participantsData[conn.peer].cam = data.cam;
+                        updateParticipantsUI();
+                        updateVideoLabel(conn.peer);
+                    }
                 } else if (data.type === 'mute-all') {
-                    // פקודת השתקה מהמורה
                     const audioTrack = myStream.getAudioTracks()[0];
                     if (audioTrack.enabled) {
                         audioTrack.enabled = false;
                         document.getElementById('mic-btn').innerText = "🎤 הפעל מיקרופון";
                         document.getElementById('mic-btn').style.background = "#ef4444";
                         updateLocalStatusIcons();
+                        broadcastStatus();
                         showToast("🔇 המורה הפעיל השתקה גלובלית לכולם");
                     }
                 } else if (data.type === 'draw') {
-                    drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, false);
+                    drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false);
                 }
             });
         }
@@ -401,21 +487,64 @@
 
             const label = document.createElement('div');
             label.className = 'video-label';
-            label.innerHTML = `<span>${name}</span>`;
+            label.id = 'label-' + peerId;
+            label.innerHTML = `<span>${name}</span><span id="hand-${peerId}"></span><span id="status-${peerId}"></span>`;
 
             box.appendChild(video);
             box.appendChild(label);
             videoGrid.appendChild(box);
         }
 
+        function updateVideoLabel(peerId) {
+            const handSpan = document.getElementById('hand-' + peerId);
+            if (handSpan && participantsData[peerId]) {
+                handSpan.innerHTML = participantsData[peerId].hand ? " ✋" : "";
+            }
+        }
+
+        // --- עדכון רשימת משתתפים ---
+        function updateParticipantsUI() {
+            const listEl = document.getElementById('participants-list');
+            let html = "";
+            let count = 0;
+
+            for (let id in participantsData) {
+                count++;
+                let p = participantsData[id];
+                let micIcon = p.mic ? "🎤" : "🔇";
+                let camIcon = p.cam ? "📹" : "📷❌";
+                let handIcon = p.hand ? " ✋" : "";
+                html += `<li><span>${p.name}${handIcon}</span> <span>${micIcon} ${camIcon}</span></li>`;
+            }
+
+            listEl.innerHTML = html;
+            document.getElementById('participant-count').innerText = count;
+        }
+
         // --- מצב פוקוס / Spotlight ---
         function toggleSpotlight(boxElement) {
-            // הסרת פוקוס מכל השאר והחלפה על התיבה הנבחרת
             const isAlreadySpotlight = boxElement.classList.contains('spotlight');
             document.querySelectorAll('.video-box').forEach(b => b.classList.remove('spotlight'));
             if (!isAlreadySpotlight) {
                 boxElement.classList.add('spotlight');
             }
+        }
+
+        // --- הרמת יד ---
+        function toggleHandRaise() {
+            let p = participantsData['local'];
+            p.hand = !p.hand;
+            const btn = document.getElementById('hand-btn');
+            btn.style.background = p.hand ? "#22c55e" : "#f59e0b";
+            btn.innerText = p.hand ? "✋ הורד יד" : "✋ הרם יד";
+            
+            document.getElementById('local-hand-icon').innerHTML = p.hand ? " ✋" : "";
+            updateParticipantsUI();
+
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'hand-raise', raised: p.hand });
+            }
+            if (p.hand) showToast("✋ הרמת את היד בהצלחה למורה");
         }
 
         // --- השתקת כולם (מורה) ---
@@ -433,7 +562,11 @@
             const btn = document.getElementById('mic-btn');
             btn.innerText = audioTrack.enabled ? "🎤 השתק מיקרופון" : "🎤 הפעל מיקרופון";
             btn.style.background = audioTrack.enabled ? "#3b82f6" : "#ef4444";
+            
+            participantsData['local'].mic = audioTrack.enabled;
             updateLocalStatusIcons();
+            updateParticipantsUI();
+            broadcastStatus();
         }
 
         function toggleCamera() {
@@ -442,7 +575,11 @@
             const btn = document.getElementById('cam-btn');
             btn.innerText = videoTrack.enabled ? "📹 לכבות מצלמה" : "📹 הדלק מצלמה";
             btn.style.background = videoTrack.enabled ? "#3b82f6" : "#ef4444";
+            
+            participantsData['local'].cam = videoTrack.enabled;
             updateLocalStatusIcons();
+            updateParticipantsUI();
+            broadcastStatus();
         }
 
         function updateLocalStatusIcons() {
@@ -454,7 +591,58 @@
             document.getElementById('local-status-icons').innerText = icons;
         }
 
-        // --- היסטוריית צ'אט ב-LocalStorage ---
+        function broadcastStatus() {
+            let p = participantsData['local'];
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'status-update', mic: p.mic, cam: p.cam });
+            }
+        }
+
+        // --- לוח לבן מתקדם ---
+        const whiteboardContainer = document.getElementById('whiteboard-container');
+        const canvas = document.getElementById('whiteboard');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let lastX = 0, lastY = 0;
+
+        function toggleWhiteboard() {
+            whiteboardContainer.style.display = whiteboardContainer.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function setEraser() {
+            document.getElementById('wb-color').value = '#ffffff';
+        }
+
+        canvas.addEventListener('mousedown', (e) => { drawing = true; [lastX, lastY] = [e.offsetX, e.offsetY]; });
+        canvas.addEventListener('mousemove', (e) => {
+            if (!drawing) return;
+            const color = document.getElementById('wb-color').value;
+            const size = document.getElementById('wb-size').value;
+            drawLineOnCanvas(lastX, lastY, e.offsetX, e.offsetY, color, size, true);
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        });
+        window.addEventListener('mouseup', () => drawing = false);
+
+        function drawLineOnCanvas(x0, y0, x1, y1, color, size, broadcast) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.closePath();
+
+            if (broadcast) {
+                for (let peerId in connections) {
+                    connections[peerId].send({ type: 'draw', x0, y0, x1, y1, color, size });
+                }
+            }
+        }
+
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+        // --- צ'אט וקבצים ---
         function saveAndAppendMessage(sender, text) {
             let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
             history.push({ type: 'text', sender, text });
@@ -469,9 +657,7 @@
             renderChatHistory();
         }
 
-        function loadChatHistory() {
-            renderChatHistory();
-        }
+        function loadChatHistory() { renderChatHistory(); }
 
         function renderChatHistory() {
             let history = JSON.parse(localStorage.getItem('chat_history') || '[]');
@@ -515,7 +701,7 @@
             reader.readAsDataURL(file);
         }
 
-        // --- הקלטת שיעור ---
+        // --- הקלטת שיעור ושיתוף מסך ---
         function toggleRecording() {
             const btn = document.getElementById('record-btn');
             if (!mediaRecorder || mediaRecorder.state === "inactive") {
@@ -530,21 +716,20 @@
                         a.href = url;
                         a.download = 'class-recording.webm';
                         a.click();
-                        showToast("💾 הקלטת השיעור נשמרה בהצלחה במחשבך!");
+                        showToast("💾 הקלטת השיעור נשמרה בהצלחה!");
                     };
                     mediaRecorder.start();
-                    btn.innerText = "⏹️ עצור ושמור הקלטה";
+                    btn.innerText = "⏹️ עצור הקלטה";
                     btn.className = "danger";
                     showToast("⏺️ הקלטת השיעור החלה...");
-                }).catch(err => alert("הקלטת המסך בוטלה או נכשלה: " + err.message));
+                }).catch(err => alert("הקלטת המסך בוטלה: " + err.message));
             } else {
                 mediaRecorder.stop();
-                btn.innerText = "⏺️ התחל הקלטה";
+                btn.innerText = "⏺️ הקלט";
                 btn.className = "success";
             }
         }
 
-        // --- שיתוף מסך ---
         function toggleScreenShare() {
             navigator.mediaDevices.getDisplayMedia({ cursor: true }).then(screenStream => {
                 const screenTrack = screenStream.getVideoTracks()[0];
@@ -565,43 +750,6 @@
                 };
             }).catch(err => console.log("שיתוף מסך בוטל", err));
         }
-
-        // --- לוח לבן ---
-        const whiteboardContainer = document.getElementById('whiteboard-container');
-        const canvas = document.getElementById('whiteboard');
-        const ctx = canvas.getContext('2d');
-        let drawing = false;
-        let lastX = 0, lastY = 0;
-
-        function toggleWhiteboard() {
-            whiteboardContainer.style.display = whiteboardContainer.style.display === 'none' ? 'block' : 'none';
-        }
-
-        canvas.addEventListener('mousedown', (e) => { drawing = true; [lastX, lastY] = [e.offsetX, e.offsetY]; });
-        canvas.addEventListener('mousemove', (e) => {
-            if (!drawing) return;
-            drawLineOnCanvas(lastX, lastY, e.offsetX, e.offsetY, '#000000', true);
-            [lastX, lastY] = [e.offsetX, e.offsetY];
-        });
-        window.addEventListener('mouseup', () => drawing = false);
-
-        function drawLineOnCanvas(x0, y0, x1, y1, color, broadcast) {
-            ctx.beginPath();
-            ctx.moveTo(x0, y0);
-            ctx.lineTo(x1, y1);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.closePath();
-
-            if (broadcast) {
-                for (let peerId in connections) {
-                    connections[peerId].send({ type: 'draw', x0, y0, x1, y1, color });
-                }
-            }
-        }
-
-        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
         function showToast(message) {
             const container = document.getElementById('toast-container');
