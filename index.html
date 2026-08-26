@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כיתה וירטואלית מלאה - הרמת יד, לוח משוכלל ורשימת משתתפים</title>
+    <title>כיתה וירטואלית מתקדמת - השתקת פרט, טשטוש רקע וסקרים</title>
     <!-- טעינת PeerJS -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -110,6 +110,11 @@
             object-fit: cover;
         }
 
+        /* אפקט טשטוש רקע וידאו */
+        .blur-bg video {
+            filter: blur(8px) contrast(1.1);
+        }
+
         .video-label {
             position: absolute;
             bottom: 5px;
@@ -137,22 +142,12 @@
             gap: 15px;
         }
 
-        .tools-panel {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            height: 340px;
-        }
-
         .participants-panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 15px;
-            height: 250px;
+            max-height: 200px;
             overflow-y: auto;
         }
 
@@ -173,6 +168,25 @@
             justify-content: space-between;
             align-items: center;
             font-size: 0.9rem;
+        }
+
+        /* פאנל סקרים פעילים */
+        .poll-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: right;
+        }
+
+        .tools-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 280px;
         }
 
         .chat-messages {
@@ -264,7 +278,7 @@
     <div id="toast-container"></div>
 
     <div class="container">
-        <h2 style="text-align: center;">🎓 כיתה וירטואלית מתקדמת עם הרמת יד וכלים מלאים</h2>
+        <h2 style="text-align: center;">🎓 כיתה וירטואלית - השתקת פרט, טשטוש רקע וסקרים</h2>
 
         <!-- מסך התחברות -->
         <div class="card" id="login-screen">
@@ -284,10 +298,11 @@
         <!-- אזור השידור והכלים -->
         <div class="main-layout" id="main-layout">
             <div>
-                <!-- סרגל בקרת שמע, וידאו, הקלטה והרמת יד -->
+                <!-- סרגל בקרה -->
                 <div class="controls-bar">
                     <button id="mic-btn" onclick="toggleMic()">🎤 השתק מיקרופון</button>
                     <button id="cam-btn" onclick="toggleCamera()">📹 לכבות מצלמה</button>
+                    <button id="blur-btn" onclick="toggleBackgroundBlur()" style="background: #0ea5e9;">🌫️ טשטוש רקע</button>
                     <button id="hand-btn" class="warning" onclick="toggleHandRaise()">✋ הרם יד</button>
                     <button onclick="toggleScreenShare()" style="background: #8b5cf6;">🖥️ שתף מסך</button>
                     <button onclick="toggleWhiteboard()" style="background: #ec4899;">🎨 לוח לבן</button>
@@ -297,7 +312,7 @@
 
                 <!-- גריד וידאו -->
                 <div class="video-grid" id="video-grid">
-                    <div class="video-box" onclick="toggleSpotlight(this)">
+                    <div class="video-box" id="local-video-box" onclick="toggleSpotlight(this)">
                         <video id="local-video" autoplay muted playsinline></video>
                         <div class="video-label" id="local-label">
                             <span id="local-name-text">אני</span>
@@ -307,7 +322,7 @@
                     </div>
                 </div>
 
-                <!-- לוח לבן עם כלים מתקדמים -->
+                <!-- לוח לבן מתקדם -->
                 <div id="whiteboard-container">
                     <div class="whiteboard-toolbar">
                         <span style="color: #000; font-weight: bold;">צבע:</span>
@@ -325,28 +340,35 @@
                 </div>
             </div>
 
-            <!-- פאנלים בצד (רשימת משתתפים וצ'אט) -->
+            <!-- פאנלים בצד -->
             <div class="panels-container">
-                <!-- רשימת משתתפים -->
+                <!-- רשימת משתתפים עם אפשרות השתקת פרט -->
                 <div class="participants-panel">
-                    <h3 style="margin-top: 0; font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;">👥 משתתפים בחדר (<span id="participant-count">1</span>)</h3>
-                    <ul class="participants-list" id="participants-list">
-                        <!-- משתתף מקומי נוסף אוטומטית -->
-                    </ul>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 5px;">
+                        <h3 style="margin: 0; font-size: 0.95rem;">👥 משתתפים (<span id="participant-count">1</span>)</h3>
+                        <button onclick="openPollModal()" style="font-size: 0.75rem; padding: 4px 8px; margin: 0; background: #6366f1;">📊 צור סקר</button>
+                    </div>
+                    <ul class="participants-list" id="participants-list"></ul>
+                </div>
+
+                <!-- פאנל סקרים פעילים -->
+                <div class="poll-panel" id="poll-area" style="display: none;">
+                    <h3 style="margin-top: 0; font-size: 0.95rem; color: #38bdf8;">📊 סקר כיתתי פעיל</h3>
+                    <div id="poll-content" style="font-size: 0.9rem;"></div>
                 </div>
 
                 <!-- פאנל צ'אט וקבצים -->
                 <div class="tools-panel">
-                    <h3 style="margin-top: 0; font-size: 1rem;">💬 צ'אט כיתתי</h3>
+                    <h3 style="margin-top: 0; font-size: 0.95rem;">💬 צ'אט כיתתי</h3>
                     <div class="chat-messages" id="chat-messages"></div>
                     <div class="chat-input-area">
                         <div class="chat-row">
                             <input type="text" id="chat-input" placeholder="כתוב הודעה..." onkeypress="handleChatKey(event)">
                             <button onclick="sendChatMessage()">שלח</button>
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: #94a3b8;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: #94a3b8;">
                             <span>צרף קובץ:</span>
-                            <input type="file" id="file-input" onchange="sendFile(event)" style="font-size: 0.75rem; padding: 2px; margin: 0; background: #0f172a;">
+                            <input type="file" id="file-input" onchange="sendFile(event)" style="font-size: 0.7rem; padding: 2px; margin: 0; background: #0f172a;">
                         </div>
                     </div>
                 </div>
@@ -362,7 +384,8 @@
         let activeCalls = {}; 
         let mediaRecorder;
         let recordedChunks = [];
-        let participantsData = {}; // שמירת מידע על כל משתתף (שם, מיקרופון, מצלמה, יד)
+        let participantsData = {}; 
+        let currentPoll = null;
 
         const videoGrid = document.getElementById('video-grid');
         const localVideo = document.getElementById('local-video');
@@ -456,6 +479,17 @@
                         updateParticipantsUI();
                         updateVideoLabel(conn.peer);
                     }
+                } else if (data.type === 'mute-specific') {
+                    // פקודת השתקה אישית מהמורה
+                    const audioTrack = myStream.getAudioTracks()[0];
+                    if (audioTrack.enabled) {
+                        audioTrack.enabled = false;
+                        document.getElementById('mic-btn').innerText = "🎤 הפעל מיקרופון";
+                        document.getElementById('mic-btn').style.background = "#ef4444";
+                        updateLocalStatusIcons();
+                        broadcastStatus();
+                        showToast("🔇 המורה הפתיק והשתיק את המיקרופון שלך");
+                    }
                 } else if (data.type === 'mute-all') {
                     const audioTrack = myStream.getAudioTracks()[0];
                     if (audioTrack.enabled) {
@@ -465,6 +499,15 @@
                         updateLocalStatusIcons();
                         broadcastStatus();
                         showToast("🔇 המורה הפעיל השתקה גלובלית לכולם");
+                    }
+                } else if (data.type === 'new-poll') {
+                    currentPoll = data.poll;
+                    renderPoll();
+                    showToast("📊 סקר חדש התקבל מהמורה!");
+                } else if (data.type === 'poll-vote') {
+                    if (currentPoll) {
+                        currentPoll.votes[data.optionIndex]++;
+                        renderPoll();
                     }
                 } else if (data.type === 'draw') {
                     drawLineOnCanvas(data.x0, data.y0, data.x1, data.y1, data.color, data.size, false);
@@ -502,7 +545,7 @@
             }
         }
 
-        // --- עדכון רשימת משתתפים ---
+        // --- עדכון רשימת משתתפים ויכולת השתקת משתתף ספציפי ---
         function updateParticipantsUI() {
             const listEl = document.getElementById('participants-list');
             let html = "";
@@ -514,11 +557,89 @@
                 let micIcon = p.mic ? "🎤" : "🔇";
                 let camIcon = p.cam ? "📹" : "📷❌";
                 let handIcon = p.hand ? " ✋" : "";
-                html += `<li><span>${p.name}${handIcon}</span> <span>${micIcon} ${camIcon}</span></li>`;
+                
+                // כפתור השתקה לתלמיד אם זה משתתף מרוחק (ניתן להוסיף הרשאת מורה מלאה)
+                let muteButton = (id !== 'local') ? `<button onclick="muteSpecificUser('${id}')" style="font-size:0.7rem; padding:2px 6px; background:#b91c1c; margin:0;">השתק</button>` : "";
+
+                html += `<li><span><b>${p.name}</b>${handIcon}</span> <span style="display:flex; gap:6px; align-items:center;">${micIcon} ${camIcon} ${muteButton}</span></li>`;
             }
 
             listEl.innerHTML = html;
             document.getElementById('participant-count').innerText = count;
+        }
+
+        function muteSpecificUser(peerId) {
+            if (connections[peerId]) {
+                connections[peerId].send({ type: 'mute-specific' });
+                showToast(`🔇 נשלחה פקודת השתקה ל-${participantsData[peerId]?.name || 'משתתף'}`);
+            }
+        }
+
+        // --- טשטוש רקע וידאו ---
+        function toggleBackgroundBlur() {
+            const box = document.getElementById('local-video-box');
+            box.classList.toggle('blur-bg');
+            const isBlurred = box.classList.contains('blur-bg');
+            const btn = document.getElementById('blur-btn');
+            btn.style.background = isBlurred ? "#22c55e" : "#0ea5e9";
+            btn.innerText = isBlurred ? "🌫️ טשטוש פעיל" : "🌫️ טשטוש רקע";
+            showToast(isBlurred ? "🌫️ טשטוש רקע הופעל" : "🌫️ טשטוש רקע הוסר");
+        }
+
+        // --- ניהול סקרים כיתתיים ---
+        function openPollModal() {
+            const question = prompt("הכנס את שאלת הסקר:");
+            if (!question) return;
+            const opt1 = prompt("אפשרות תשובה 1:");
+            const opt2 = prompt("אפשרות תשובה 2:");
+            if (!opt1 || !opt2) return;
+
+            let options = [opt1, opt2];
+            const opt3 = prompt("אפשרות תשובה 3 (אופציונלי, השאר ריק אם אין):");
+            if (opt3) options.push(opt3);
+
+            currentPoll = {
+                question: question,
+                options: options,
+                votes: new Array(options.length).fill(0)
+            };
+
+            renderPoll();
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'new-poll', poll: currentPoll });
+            }
+            showToast("📊 הסקר נשלח בהצלחה לכל תלמידי החדר!");
+        }
+
+        function renderPoll() {
+            const area = document.getElementById('poll-area');
+            const content = document.getElementById('poll-content');
+            area.style.display = 'block';
+
+            let totalVotes = currentPoll.votes.reduce((a, b) => a + b, 0);
+
+            let html = `<p style="margin: 0 0 8px; font-weight: bold;">שלה: ${currentPoll.question}</p>`;
+            currentPoll.options.forEach((opt, index) => {
+                let votesCount = currentPoll.votes[index];
+                let percent = totalVotes > 0 ? Math.round((votesCount / totalVotes) * 100) : 0;
+                html += `
+                    <div style="margin-bottom: 6px;">
+                        <button onclick="votePoll(${index})" style="width: 100%; text-align: right; padding: 6px 10px; background: #334155; font-size: 0.85rem; margin: 0;">
+                            ${opt} (${percent}% - ${votesCount} קולות)
+                        </button>
+                    </div>
+                `;
+            });
+            content.innerHTML = html;
+        }
+
+        function votePoll(index) {
+            currentPoll.votes[index]++;
+            renderPoll();
+            for (let peerId in connections) {
+                connections[peerId].send({ type: 'poll-vote', optionIndex: index });
+            }
+            showToast("✅ הצבעתך נקלטה בסקר!");
         }
 
         // --- מצב פוקוס / Spotlight ---
