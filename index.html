@@ -357,7 +357,7 @@
             border: 1px solid rgba(56, 189, 248, 0.3);
         }
 
-        #map-container, #academic-hub-container {
+        #map-container {
             display: none;
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
@@ -460,7 +460,7 @@
             position: relative;
         }
 
-        /* עיצוב המחשבון ההנדסי החדש */
+        /* עיצוב המחשבון ההנדסי */
         #calculator-container {
             display: none;
             background: var(--bg-surface);
@@ -676,54 +676,12 @@
                     <button id="hand-btn" class="btn-warning" onclick="toggleHandRaise()">✋ הרם יד</button>
                     <button onclick="toggleScreenShare()" style="color: #c084fc;">🖥️ שתף מסך</button>
                     <button onclick="toggleGeoMap()" style="color: #34d399;">🗺️ מפת משתתפים</button>
-                    <button onclick="toggleAcademicHub()" style="color: #fbbf24;">⚡ הנדסה, תרמודינמיקה וכלכלה</button>
                     <button onclick="toggleAIAssistant()" style="color: #f472b6;">🤖 עזר AI</button>
                     <button onclick="toggleWhiteboard()" style="color: #f43f5e;">🎨 לוח ו-PDF</button>
                     <button onclick="toggle3DSpace()" style="color: #38bdf8;">🌌 מרחב 3D</button>
                     <button onclick="toggleGraphSpace()" style="color: #f59e0b;">📈 מחולל גרפים</button>
                     <button onclick="toggleCalculator()" style="color: #38bdf8;">🧮 מחשבון הנדסי</button>
                     <button id="record-btn" class="btn-success" onclick="toggleRecording()">⏺️ הקלט</button>
-                </div>
-
-                <!-- פאנל אקדמי חדש: חשמל, תרמודינמיקה וכלכלה -->
-                <div id="academic-hub-container">
-                    <h3 style="margin-top: 0; color: #fbbf24; font-size: 1.1rem; text-align: right;">⚡ מעבדת חישובים: חשמל, תרמודינמיקה וכלכלה</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; text-align: right; margin-top: 15px;">
-                        
-                        <!-- הנדסת חשמל -->
-                        <div style="background: var(--bg-base); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                            <h4 style="color: #38bdf8; margin-top: 0;">🔌 הנדסת חשמל (ממירים ופסי צבירה)</h4>
-                            <label style="font-size: 0.8rem; color: var(--text-muted);">הספק ממיר (KVA, למשל SMA Sunny Central 4600UP):</label>
-                            <input type="number" id="elec-power" value="4600" style="width: 100%; margin-bottom: 8px;" dir="ltr">
-                            <label style="font-size: 0.8rem; color: var(--text-muted);">מתח יציאה נומינלי (V):</label>
-                            <input type="number" id="elec-voltage" value="690" style="width: 100%; margin-bottom: 8px;" dir="ltr">
-                            <button onclick="calcElectrical()" style="width: 100%; background: #38bdf8; color: #000; font-weight: bold;">חשב זרם ופס צבירה</button>
-                            <div id="elec-result" style="margin-top: 10px; font-size: 0.85rem; color: var(--success); font-weight: bold;"></div>
-                        </div>
-
-                        <!-- פיזיקה ותרמודינמיקה -->
-                        <div style="background: var(--bg-base); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                            <h4 style="color: #f43f5e; margin-top: 0;">🌡️ פיזיקה ותרמודינמיקה (דיודה ואדמה)</h4>
-                            <label style="font-size: 0.8rem; color: var(--text-muted);">עומק בכדור הארץ (מטרים):</label>
-                            <input type="number" id="geo-depth" value="10" style="width: 100%; margin-bottom: 8px;" dir="ltr">
-                            <label style="font-size: 0.8rem; color: var(--text-muted);">התנגדות תרמית סגולית (K·m/W):</label>
-                            <input type="number" id="thermal-resistivity" value="1.2" style="width: 100%; margin-bottom: 8px;" dir="ltr">
-                            <button onclick="calcThermodynamics()" style="width: 100%; background: #f43f5e; color: #fff; font-weight: bold;">חשב אנרגיה והתנגדות</button>
-                            <div id=" thermo-result" style="margin-top: 10px; font-size: 0.85rem; color: var(--success); font-weight: bold;"></div>
-                        </div>
-
-                        <!-- כלכלה -->
-                        <div style="background: var(--bg-base); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                            <h4 style="color: #34d399; margin-top: 0;">📊 כלכלה (מודל תשואה והשקעה)</h4>
-                            <label style="font-size: 0.8rem; color: var(--text-muted);">עלות הקמת מערכת (₪):</label>
-                            <input type="number" id="econ-cost" value="1500000" style="width: 100%; margin-bottom: 8px;" dir="ltr">
-                            <label style="font-size: 0.8rem; color: var(--text-muted);">חיסכון/הכנסה שנתי מוערך (₪):</label>
-                            <input type="number" id="econ-saving" value="250000" style="width: 100%; margin-bottom: 8px;" dir="ltr">
-                            <button onclick="calcEconomics()" style="width: 100%; background: #34d399; color: #000; font-weight: bold;">חשב תקופת החזר (ROI)</button>
-                            <div id="econ-result" style="margin-top: 10px; font-size: 0.85rem; color: var(--success); font-weight: bold;"></div>
-                        </div>
-
-                    </div>
                 </div>
 
                 <!-- מחשבון הנדסי -->
@@ -1075,50 +1033,6 @@
         function toggleTheme() {
             const body = document.body;
             body.getAttribute("data-theme") === "dark" ? body.setAttribute("data-theme", "light") : body.setAttribute("data-theme", "dark");
-        }
-
-        /* חישובים אקדמיים חדשים שביקשת */
-        function toggleAcademicHub() {
-            const container = document.getElementById('academic-hub-container');
-            container.style.display = container.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function calcElectrical() {
-            const powerKva = parseFloat(document.getElementById('elec-power').value) || 4600;
-            const voltage = parseFloat(document.getElementById('elec-voltage').value) || 690;
-            // חישוב זרם תלת פאזי: I = S / (sqrt(3) * V)
-            const currentA = (powerKva * 1000) / (Math.sqrt(3) * voltage);
-            // הערכת גודל פס צבירה (לפי צפיפות זרם ממוצעת של 1.5A ממ"ר לנחושת)
-            const busbarSizeMm2 = currentA / 1.5;
-            
-            document.getElementById('elec-result').innerHTML = `
-                זרם מחושב ($I$): ${currentA.toFixed(2)} A<br>
-                שטח חתך פס צבירה מומלץ (נחושת): ~${busbarSizeMm2.toFixed(1)} mm²
-            `;
-        }
-
-        function calcThermodynamics() {
-            const depth = parseFloat(document.getElementById('geo-depth').value) || 10;
-            const resistivity = parseFloat(document.getElementById('thermal-resistivity').value) || 1.2;
-            // מודל מקורב להתנגדות תרמית לפי עומק וטמפרטורת קרקע (גרדיאנט גיאותרמי בסיסי)
-            const thermalResistance = (resistivity / (2 * Math.PI)) * Math.log(4 * depth / 0.1);
-            const estimatedEnergyDiode = depth * 14.5 * resistivity; // אומדן אנרגיה יחסית
-
-            document.getElementById('thermo-result').innerHTML = `
-                התנגדות תרמית מחושבת: ${thermalResistance.toFixed(3)} K·W⁻¹<br>
-                אנרגיית דיודה יחסית לעומק: ${estimatedEnergyDiode.toFixed(2)} Wh
-            `;
-        }
-
-        function calcEconomics() {
-            const cost = parseFloat(document.getElementById('econ-cost').value) || 1500000;
-            const saving = parseFloat(document.getElementById('econ-saving').value) || 250000;
-            const roiYears = saving > 0 ? (cost / saving) : 0;
-
-            document.getElementById('econ-result').innerHTML = `
-                תקופת החזר השקעה (Payback): ${roiYears.toFixed(2)} שנים<br>
-                תשואה שנתית להשקעה: ${(100 / roiYears).toFixed(1)}%
-            `;
         }
 
         /* פונקציות מחשבון הנדסי */
