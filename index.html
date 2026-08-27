@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <!-- הגדרות PWA -->
+    <!-- הגדרות PWA מתקדמות -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#6366f1">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- תמיכה ייעודית ב-iOS / Apple -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="כיתה וירטואלית">
+    <link rel="apple-touch-icon" href="icon-192.png">
 
     <meta charset="UTF-8">
     <title>כיתה וירטואלית אולטימטיבית - מפה, AI, קבצים, שערי מט"ח ועוד</title>
@@ -921,6 +925,15 @@
     </div>
 
     <script>
+        // רישום Service Worker לטובת PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered! Scope:', reg.scope))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
+
         let peer;
         let myStream;
         let myName = "";
